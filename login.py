@@ -408,6 +408,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
     return
 
 async def typephoneuser(page, usernum):
+    await page.waitFor(random.randint(200, 500))
     tel_input = await page.waitForSelector('input[type="tel"]')
     await tel_input.click()
     await tel_input.type(usernum)
