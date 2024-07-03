@@ -166,10 +166,8 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 continue
             elif await page.querySelector('.dialog'):
                 print("进入弹出对话框分支")
-                des = await page.querySelector('.dialog-des').evaluate("textContent")
-                print(des)
                 workList[uid].status = "error"
-                workList[uid].msg = des
+                workList[uid].msg = "账号异常，自行检查"
                 break
             if False == sms_sent:
                 button = await page.querySelector('.getMsg-btn.text-btn')
@@ -871,6 +869,7 @@ async def download_file(url, file_path):
     print("下载完成，进行解压安装....")
 
 
+
 async def main(workList, uid, oocr):
     global ocr
     ocr = oocr
@@ -950,7 +949,7 @@ async def main(workList, uid, oocr):
             return "unknown"
     print("判断初始化浏览器")
     chromium_path = await init_chrome()
-    headless = True
+    headless = False
     print("选择登录")
     if workList[uid].type == "phone":
         print("选择手机号登录")
