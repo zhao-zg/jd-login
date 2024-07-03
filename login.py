@@ -71,8 +71,8 @@ async def loginPhone(chromium_path, workList, uid, headless):
     # 判断验证码错误
     async def isStillInSMSCodeSentPage(page):
         try:
-            button = await page.querySelector('.getMsg-btn.text-btn.timer.active')
-            if button:
+            button = await page.querySelector('.getMsg-btn.text-btn')
+            if "获取验证码" in button.evaluate("textContent"):
                 return False
             return await page.querySelector('#authcode')
         except Exception as e:
@@ -164,8 +164,17 @@ async def loginPhone(chromium_path, workList, uid, headless):
                     await verification_shape(page)
                     await page.waitFor(2000)
                 continue
+            elif await page.querySelector('.dialog'):
+                print("进入弹出对话框分支")
+                des = await page.querySelector('.dialog-des').evaluate("textContent")
+                print(des)
+                workList[uid].status = "error"
+                workList[uid].msg = des
+                break
             if False == sms_sent:
-                if await page.querySelector('.getMsg-btn.text-btn'):
+                button = await page.querySelector('.getMsg-btn.text-btn')
+                print(button.evaluate("textContent"))
+                if "获取验证码" not in button.evaluate("textContent"):
                     print("进入直接发短信分支")
                     if not workList[uid].isAuto:
                         workList[uid].status = "SMS"
