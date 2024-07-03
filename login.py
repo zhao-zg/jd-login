@@ -46,7 +46,7 @@ supported_colors = {
 async def deleteSession(workList, uid):
     s = workList.get(uid, "")
     if s:
-        await asyncio.sleep(60)
+        await asyncio.sleep(10)
         del workList[uid]
 
 async def loginPhone(chromium_path, workList, uid, headless):
@@ -68,20 +68,21 @@ async def loginPhone(chromium_path, workList, uid, headless):
             print("isWrongAccountOrPassword " + str(e))
             return False
 
-    # 判断验证码超时
+    # 判断验证码错误
     async def isStillInSMSCodeSentPage(page):
         try:
-            if await page.querySelector('.getMsg-btn.text-btn.timer'):
+            button = await page.querySelector('.getMsg-btn.text-btn.timer.active')
+            if button:
                 return False
             return await page.querySelector('#authcode')
         except Exception as e:
             print("isStillInSMSCodeSentPage " + str(e))
             return False
 
-    # 判断验证码错误
+    # 判断验证码超时
     async def needResendSMSCode(page):
         try:
-            return await page.querySelector('.getMsg-btn.text-btn.timer');
+            return await page.querySelector('.getMsg-btn.text-btn.timer.active');
         except Exception as e:
             print("needResendSMSCode " + str(e))
             return False
@@ -117,7 +118,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
     page = await browser.newPage()
     await page.setViewport({"width": 360, "height": 640})
     await page.goto(
-        "https://plogin.m.jd.com/login/login"
+        "https://plogin.m.jd.com/login/login?appid=300&returnurl=https%3A%2F%2Fm.jd.com%2F&source=wq_passport"
     )
     await typephoneuser(page, usernum)
 
@@ -128,7 +129,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
         try:
             now_time = datetime.datetime.now()
             print("循环检测中...")
-            if (now_time - start_time).total_seconds() > 90:
+            if (now_time - start_time).total_seconds() > 70:
                 print("进入超时分支")
                 workList[uid].status = "error"
                 workList[uid].msg = "登录超时"
@@ -164,18 +165,19 @@ async def loginPhone(chromium_path, workList, uid, headless):
                     await page.waitFor(2000)
                 continue
             if False == sms_sent:
-                print("进入直接发短信分支")
-                if not workList[uid].isAuto:
-                    workList[uid].status = "SMS"
-                    workList[uid].msg = "需要短信验证"
-                    await typePhoneSMScode(page, workList, uid)
-                    sms_sent = True
+                if await page.querySelector('.getMsg-btn.text-btn'):
+                    print("进入直接发短信分支")
+                    if not workList[uid].isAuto:
+                        workList[uid].status = "SMS"
+                        workList[uid].msg = "需要短信验证"
+                        await typePhoneSMScode(page, workList, uid)
+                        sms_sent = True
 
-                else:
-                    workList[uid].status = "error"
-                    workList[uid].msg = "自动续期时不能使用短信验证"
-                    print("自动续期时不能使用短信验证")
-                    break
+                    else:
+                        workList[uid].status = "error"
+                        workList[uid].msg = "自动续期时不能使用短信验证"
+                        print("自动续期时不能使用短信验证")
+                        break
             else:
                 if await isStillInSMSCodeSentPage(page):
                     print("进入验证码错误分支")
@@ -299,7 +301,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
         try:
             now_time = datetime.datetime.now()
             print("循环检测中...")
-            if (now_time - start_time).total_seconds() > 90:
+            if (now_time - start_time).total_seconds() > 70:
                 print("进入超时分支")
                 workList[uid].status = "error"
                 workList[uid].msg = "登录超时"
@@ -930,7 +932,7 @@ async def main(workList, uid, oocr):
                 await download_file(download_url, target_file)
                 with zipfile.ZipFile(target_file, "r") as zip_ref:
                     zip_ref.extractall(download_path)
-                #os.remove(target_file)
+                os.remove(target_file)
                 os.chmod(chrome_path, 0o755)
                 return chrome_path
         elif platform.system() == "Darwin":
