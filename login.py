@@ -165,7 +165,6 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 break
             if False == sms_sent:
                 button = await page.querySelector('.getMsg-btn.text-btn.timer.active')
-                print(button.evaluate("textContent"))
                 if button and "获取验证码" not in button.evaluate("textContent"):
                     print("进入直接发短信分支")
                     if not workList[uid].isAuto:
