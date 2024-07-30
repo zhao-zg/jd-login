@@ -164,7 +164,6 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 workList[uid].msg = "账号异常，自行检查"
                 break
             if False == sms_sent:
-                getMsg-btn text-btn timer active
                 button = await page.querySelector('.getMsg-btn.text-btn.timer.active')
                 if button is None:
                     print("进入直接发短信分支")
