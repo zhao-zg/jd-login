@@ -82,7 +82,7 @@ async def loginPhone():
 async def login():
     print("login")
     data = await request.get_json()
-    data.set("type", "password")
+    data["type"] = "password"
     return loginPublic(data)
     
 # 传入账号密码，启动登录线程
