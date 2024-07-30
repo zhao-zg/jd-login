@@ -76,72 +76,22 @@ def mr(status, **kwargs):
 async def loginPhone():
     print("loginPhone")
     data = await request.get_json()
-    try:
-        u = account(data)
-    except Exception as e:
-        r = mr("error", msg=str(e))
-        return r
-    # 检测重复提交
-    if workList.get(u.uid):
-        workList[u.uid].SMS_CODE = None
-        r = mr("pass", uid=u.uid, msg=f"{u.account}已经在处理了，请稍后再试")
-        return r
-
-    # 新增记录
-    workList[u.uid] = u
-    # 非阻塞启动登录线程
-    asyncio.create_task(THREAD_DO_LOGIN(workList, u.uid, ocr))
-    # 更新信息，响应api请求
-    workList[u.uid].status = "pending"
-    r = mr("pass", uid=u.uid, msg=f"{u.account}处理中, 到/check查询处理进度")
-    return r
+    return loginPublic(data)
 # 传入账号密码，启动登录线程
 @app.route("/login", methods=["POST"])
 async def login():
+    print("login")
     data = await request.get_json()
-    try:
-        u = account(data)
-    except Exception as e:
-        r = mr("error", msg=str(e))
-        return r
-    # 检测重复提交
-    if workList.get(u.uid):
-        workList[u.uid].SMS_CODE = None
-        r = mr("pass", uid=u.uid, msg=f"{u.account}已经在处理了，请稍后再试")
-        return r
-
-    # 新增记录
-    workList[u.uid] = u
-    # 非阻塞启动登录线程
-    asyncio.create_task(THREAD_DO_LOGIN(workList, u.uid, ocr))
-    # 更新信息，响应api请求
-    workList[u.uid].status = "pending"
-    r = mr("pass", uid=u.uid, msg=f"{u.account}处理中, 到/check查询处理进度")
-    return r
+    data.type = "password"
+    return loginPublic(data)
     
 # 传入账号密码，启动登录线程
 @app.route("/loginPassword", methods=["POST"])
 async def loginPassword():
+    print("loginPassword")
     data = await request.get_json()
-    try:
-        u = account(data)
-    except Exception as e:
-        r = mr("error", msg=str(e))
-        return r
-    # 检测重复提交
-    if workList.get(u.uid):
-        workList[u.uid].SMS_CODE = None
-        r = mr("pass", uid=u.uid, msg=f"{u.account}已经在处理了，请稍后再试")
-        return r
-
-    # 新增记录
-    workList[u.uid] = u
-    # 非阻塞启动登录线程
-    asyncio.create_task(THREAD_DO_LOGIN(workList, u.uid, ocr))
-    # 更新信息，响应api请求
-    workList[u.uid].status = "pending"
-    r = mr("pass", uid=u.uid, msg=f"{u.account}处理中, 到/check查询处理进度")
-    return r
+    
+    return loginPublic(data)
 
 
 # 调用后端进行登录
@@ -209,7 +159,27 @@ async def sms():
     except Exception as e:
         r = mr("error", msg=str(e))
         return r
+        
+def loginPublic(data):
+    try:
+        u = account(data)
+    except Exception as e:
+        r = mr("error", msg=str(e))
+        return r
+    # 检测重复提交
+    if workList.get(u.uid):
+        workList[u.uid].SMS_CODE = None
+        r = mr("pass", uid=u.uid, msg=f"{u.account}已经在处理了，请稍后再试")
+        return r
 
+    # 新增记录
+    workList[u.uid] = u
+    # 非阻塞启动登录线程
+    asyncio.create_task(THREAD_DO_LOGIN(workList, u.uid, ocr))
+    # 更新信息，响应api请求
+    workList[u.uid].status = "pending"
+    r = mr("pass", uid=u.uid, msg=f"{u.account}处理中, 到/check查询处理进度")
+    return r
 
 def THREAD_SMS(uid, code):
     print("phase THREAD_SMS: " + str(code))
