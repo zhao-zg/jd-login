@@ -389,12 +389,11 @@ async def loginPassword(chromium_path, workList, uid, headless):
 
             await asyncio.sleep(1)
         except Exception as e:
-            continue
             print("异常退出")
             print(e)
             await browser.close()
             raise e
-
+        
     print("任务完成退出")
 
     await browser.close()
