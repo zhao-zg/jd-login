@@ -100,7 +100,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
 
     usernum = workList[uid].account
     
-    print(f"正在登录 {usernum} 的账号")
+    print(f"正在登录 {usernum} 的手机号")
 
     browser = await launch(
         {
