@@ -77,11 +77,12 @@ def mr(status, **kwargs):
 async def login():
     print("login")
     data = await request.get_json()
-    data["type"] = "password"
+    if "type" not in data:
+        data["type"] = "password"
     return loginPublic(data)
     
 # 启动登录线程
-@app.route("/loginPassword", methods=["POST"])
+@app.route("/loginNew", methods=["POST"])
 async def loginNew():
     print("loginPassword")
     data = await request.get_json()
