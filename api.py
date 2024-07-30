@@ -96,9 +96,9 @@ async def loginPhone():
     r = mr("pass", uid=u.uid, msg=f"{u.account}处理中, 到/check查询处理进度")
     return r
 # 传入账号密码，启动登录线程
-@app.route("/loginPassword", methods=["POST"])
-async def login():
-    await loginPassword()
+#@app.route("/loginPassword", methods=["POST"])
+#async def login():
+#    loginPassword()
 # 传入账号密码，启动登录线程
 @app.route("/loginPassword", methods=["POST"])
 async def loginPassword():
