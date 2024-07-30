@@ -165,7 +165,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 break
             if False == sms_sent:
                 button = await page.querySelector('.getMsg-btn.text-btn')
-                if button and "获取验证码" not in button.getProperty("textContent"):
+                if button and "获取验证码" not in (await button.getProperty("textContent")):
                     print("进入直接发短信分支")
                     if not workList[uid].isAuto:
                         workList[uid].status = "SMS"
@@ -199,6 +199,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
             print("异常退出")
             print(e)
             await browser.close()
+            await deleteSession(workList, uid)
             raise e
 
     print("任务完成退出")
@@ -390,6 +391,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
             print("异常退出")
             print(e)
             await browser.close()
+            await deleteSession(workList, uid)
             raise e
         
     print("任务完成退出")
