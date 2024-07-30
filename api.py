@@ -71,12 +71,6 @@ def mr(status, **kwargs):
 
 
 # -----router-----
-# 传入手机号，启动登录线程
-@app.route("/loginPhone", methods=["POST"])
-async def loginPhone():
-    print("loginPhone")
-    data = await request.get_json()
-    return loginPublic(data)
     
 # 传入账号密码，启动登录线程
 @app.route("/login", methods=["POST"])
@@ -86,12 +80,11 @@ async def login():
     data["type"] = "password"
     return loginPublic(data)
     
-# 传入账号密码，启动登录线程
+# 启动登录线程
 @app.route("/loginPassword", methods=["POST"])
-async def loginPassword():
+async def loginNew():
     print("loginPassword")
     data = await request.get_json()
-    
     return loginPublic(data)
 
 
