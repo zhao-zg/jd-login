@@ -96,9 +96,29 @@ async def loginPhone():
     r = mr("pass", uid=u.uid, msg=f"{u.account}处理中, 到/check查询处理进度")
     return r
 # 传入账号密码，启动登录线程
-#@app.route("/loginPassword", methods=["POST"])
-#async def login():
-#    loginPassword()
+@app.route("/login", methods=["POST"])
+async def login():
+    data = await request.get_json()
+    try:
+        u = account(data)
+    except Exception as e:
+        r = mr("error", msg=str(e))
+        return r
+    # 检测重复提交
+    if workList.get(u.uid):
+        workList[u.uid].SMS_CODE = None
+        r = mr("pass", uid=u.uid, msg=f"{u.account}已经在处理了，请稍后再试")
+        return r
+
+    # 新增记录
+    workList[u.uid] = u
+    # 非阻塞启动登录线程
+    asyncio.create_task(THREAD_DO_LOGIN(workList, u.uid, ocr))
+    # 更新信息，响应api请求
+    workList[u.uid].status = "pending"
+    r = mr("pass", uid=u.uid, msg=f"{u.account}处理中, 到/check查询处理进度")
+    return r
+    
 # 传入账号密码，启动登录线程
 @app.route("/loginPassword", methods=["POST"])
 async def loginPassword():
