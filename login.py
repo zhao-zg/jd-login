@@ -71,8 +71,8 @@ async def loginPhone(chromium_path, workList, uid, headless):
     # 判断验证码错误
     async def isStillInSMSCodeSentPage(page):
         try:
-            button = await page.querySelector('.getMsg-btn.text-btn')
-            if "获取验证码" in button.evaluate("textContent"):
+            button = await page.querySelector('.getMsg-btn.text-btn.timer.active')
+            if button:
                 return False
             return await page.querySelector('#authcode')
         except Exception as e:
@@ -164,8 +164,9 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 workList[uid].msg = "账号异常，自行检查"
                 break
             if False == sms_sent:
-                button = await page.querySelector('.getMsg-btn.text-btn')
-                if button and "获取验证码" not in (await button.getProperty("textContent")):
+                getMsg-btn text-btn timer active
+                button = await page.querySelector('.getMsg-btn.text-btn.timer.active')
+                if button is None:
                     print("进入直接发短信分支")
                     if not workList[uid].isAuto:
                         workList[uid].status = "SMS"
@@ -199,7 +200,6 @@ async def loginPhone(chromium_path, workList, uid, headless):
             print("异常退出")
             print(e)
             await browser.close()
-            await deleteSession(workList, uid)
             raise e
 
     print("任务完成退出")
@@ -391,7 +391,6 @@ async def loginPassword(chromium_path, workList, uid, headless):
             print("异常退出")
             print(e)
             await browser.close()
-            await deleteSession(workList, uid)
             raise e
         
     print("任务完成退出")
