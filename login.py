@@ -118,7 +118,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
     page = await browser.newPage()
     await page.setViewport({"width": 360, "height": 640})
     await page.goto(
-        "https://plogin.m.jd.com/login/login?appid=300&returnurl=https%3A%2F%2Fm.jd.com%2F&source=wq_passport"
+        "https://plogin.m.jd.com/login/login"
     )
     await typephoneuser(page, usernum)
 
@@ -141,12 +141,6 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 workList[uid].status = "pass"
                 break
 
-            elif await isWrongAccountOrPassword(page):
-                print("进入账号密码不正确分支")
-
-                workList[uid].status = "error"
-                workList[uid].msg = "账号或密码不正确"
-                break
             elif await page.xpath('//*[@id="captcha_modal"]'):
                 print("进入安全验证分支")
                 if await page.xpath('//*[@id="small_img"]'):
