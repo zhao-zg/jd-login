@@ -950,7 +950,7 @@ async def main(workList, uid, oocr):
             return "unknown"
     print("判断初始化浏览器")
     chromium_path = await init_chrome()
-    headless = True
+    headless = 'new'
     print("选择登录")
     if workList[uid].type == "phone":
         print("选择手机号登录")
