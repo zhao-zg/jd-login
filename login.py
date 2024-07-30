@@ -164,9 +164,9 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 workList[uid].msg = "账号异常，自行检查"
                 break
             if False == sms_sent:
-                button = await page.querySelector('.getMsg-btn.text-btn')
+                button = await page.querySelector('.getMsg-btn.text-btn.timer.active')
                 print(button.evaluate("textContent"))
-                if "获取验证码" not in button.evaluate("textContent"):
+                if button and "获取验证码" not in button.evaluate("textContent"):
                     print("进入直接发短信分支")
                     if not workList[uid].isAuto:
                         workList[uid].status = "SMS"
@@ -197,7 +197,6 @@ async def loginPhone(chromium_path, workList, uid, headless):
 
             await asyncio.sleep(1)
         except Exception as e:
-            continue
             print("异常退出")
             print(e)
             await browser.close()
