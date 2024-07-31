@@ -331,10 +331,10 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     await page.waitFor(3000)
                 elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
                     print("进入点形状、颜色验证分支")
-
-	                workList[uid].status = "pending"
+                    
+                    workList[uid].status = "pending"
 	                workList[uid].msg = "正在过形状、颜色检测"
-	                if await verification_shape(page) == "notSupport":
+                    if await verification_shape(page) == "notSupport":
 	                    print("即将重启浏览器重试")
 	                    await browser.close()
 	                    return "notSupport"
