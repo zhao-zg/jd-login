@@ -333,7 +333,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     print("进入点形状、颜色验证分支")
                     
                     workList[uid].status = "pending"
-	                workList[uid].msg = "正在过形状、颜色检测"
+                    workList[uid].msg = "正在过形状、颜色检测"
                     if await verification_shape(page) == "notSupport":
 	                    print("即将重启浏览器重试")
 	                    await browser.close()
@@ -1014,10 +1014,10 @@ async def main(workList, uid, oocr, oocrDet):
     
     try_time = 1
     while True:
-		if workList[uid].type == "phone":
-	        print("选择手机号登录")
-	        aresult = wait loginPhone(chromium_path, workList, uid, headless)
-	    elif workList[uid].type == "password":
+        if workList[uid].type == "phone":
+            print("选择手机号登录")
+            result = await loginPhone(chromium_path, workList, uid, headless)
+        elif workList[uid].type == "password":
 	        print("选择密码登录")
 	        result = await loginPassword(chromium_path, workList, uid, headless)
         if result != "notSupport" or try_time > 5:
