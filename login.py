@@ -157,7 +157,8 @@ async def loginPhone(chromium_path, workList, uid, headless):
 
                     workList[uid].status = "pending"
                     workList[uid].msg = "正在过形状、颜色检测"
-                    await verification_shape(page)
+                    if await verification_shape(page) == "notSupport":
+                        return "notSupport"
                     await page.waitFor(2000)
                 continue
             elif await page.querySelector('.dialog'):
