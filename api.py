@@ -10,6 +10,7 @@ import login as backend
 import ddddocr
 
 ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
+ocrDet = ddddocr.DdddOcr(show_ad=False, beta=True, det=True)
 
 
 class account:
@@ -90,9 +91,9 @@ async def loginNew():
 
 
 # 调用后端进行登录
-async def THREAD_DO_LOGIN(workList, uid, ocr):
+async def THREAD_DO_LOGIN(workList, uid, ocr, ocrDet):
     try:
-        await backend.main(workList, uid, ocr)
+        await backend.main(workList, uid, ocr, ocrDet)
     except Exception as e:
         print(e)
         workList[uid].msg = str(e)
@@ -170,7 +171,7 @@ def loginPublic(data):
     # 新增记录
     workList[u.uid] = u
     # 非阻塞启动登录线程
-    asyncio.create_task(THREAD_DO_LOGIN(workList, u.uid, ocr))
+    asyncio.create_task(THREAD_DO_LOGIN(workList, u.uid, ocr, ocrDet))
     # 更新信息，响应api请求
     workList[u.uid].status = "pending"
     r = mr("pass", uid=u.uid, msg=f"{u.account}处理中, 到/check查询处理进度")
