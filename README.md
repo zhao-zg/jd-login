@@ -2,8 +2,7 @@
 无界插件对应京东登录
 
 包括账密登录和密码登录
-
-可以直接纯净docker部署 使用compose代码如下
+可以直接纯净docker部署 使用compose代码如下（可自行加前缀代理）
 ```
 version: "3"
 services:
@@ -11,7 +10,7 @@ services:
     image: python:3.12.4
     container_name: jd_autologin
     restart: unless-stopped
-    port:
+    ports:
       - 12345:12345
     working_dir: /app
     environment:
@@ -23,9 +22,9 @@ services:
       libatspi2.0-0 libxshmfence1 && python -m pip install --upgrade pip && pip
       install pyppeteer Pillow asyncio aiohttp opencv-python-headless ddddocr
       quart && rm -rf && wget -O api.py
-      https://proxy.07170501.xyz/proxy/https://raw.githubusercontent.com/zhao-zg/jd-login/main/api.py
+      https://raw.githubusercontent.com/zhao-zg/jd-login/main/api.py
       && wget -O login.py
-      https://proxy.07170501.xyz/proxy/https://raw.githubusercontent.com/zhao-zg/jd-login/main/login.py
+      https://raw.githubusercontent.com/zhao-zg/jd-login/main/login.py
       && python api.py"
 networks: {}
 
