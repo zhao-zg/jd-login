@@ -48,7 +48,7 @@ supported_colors = {
 async def deleteSession(workList, uid):
     s = workList.get(uid, "")
     if s:
-        await asyncio.sleep(10)
+        await asyncio.sleep(15)
         del workList[uid]
 
 async def loginPhone(chromium_path, workList, uid, headless):
@@ -202,12 +202,11 @@ async def loginPhone(chromium_path, workList, uid, headless):
             print("异常退出")
             print(e)
             await browser.close()
+            await deleteSession(workList, uid)
             raise e
 
     print("任务完成退出")
-
     await browser.close()
-    await deleteSession(workList, uid)
     return
 async def loginPassword(chromium_path, workList, uid, headless):
     # 判断账号密码错误
@@ -400,12 +399,12 @@ async def loginPassword(chromium_path, workList, uid, headless):
             print("异常退出")
             print(e)
             await browser.close()
+            await deleteSession(workList, uid)
             raise e
         
     print("任务完成退出")
 
     await browser.close()
-    await deleteSession(workList, uid)
     return
 
 async def typephoneuser(page, usernum):
@@ -1036,6 +1035,6 @@ async def main(workList, uid, oocr, oocrDet):
         os.remove("rgba_word_img.png")
     if os.path.exists("rgb_word_img.png"):
         os.remove("rgb_word_img.png")
-
+    await deleteSession(workList, uid)
     print("登录完成")
     await asyncio.sleep(10)
