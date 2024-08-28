@@ -338,7 +338,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
 	                    print("即将重启浏览器重试")
 	                    await browser.close()
 	                    return "notSupport"
-                	await page.waitFor(3000)
+                    await page.waitFor(3000)
             if not sms_sent:
 
                 if await page.J(".sub-title"):
