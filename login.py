@@ -338,6 +338,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
 	                    print("即将重启浏览器重试")
 	                    await browser.close()
 	                    return "notSupport"
+                	await page.waitFor(3000)
             if not sms_sent:
 
                 if await page.J(".sub-title"):
@@ -405,6 +406,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
     print("任务完成退出")
 
     await browser.close()
+    await deleteSession(workList, uid)
     return
 
 async def typephoneuser(page, usernum):
@@ -793,7 +795,17 @@ async def verification_shape(page):
         word = get_word(ocr, "rgb_word_img.png")
 
         button = await page.querySelector("div.captcha_footer button.sure_btn")
+        if button is None:
+            button = await page.querySelector(".sure_btn")
+        if button is None:
+            print("未找到提交按钮")
+            raise "未找到提交按钮"
         refresh_button = await page.querySelector("div.captcha_header img.jcap_refresh")
+        if refresh_button is None:
+            refresh_button = await page.querySelector("div.captcha_header span.jcap_refresh")
+        if refresh_button is None:
+            refresh_button = await page.querySelector(".jcap_refresh")
+
 
         if word.find("色") > 0:
             target_color = word.split("请选出图中")[1].split("的图形")[0]
@@ -804,6 +816,9 @@ async def verification_shape(page):
                 )
                 if center_x is None and center_y is None:
                     print("识别失败，刷新")
+                    if refresh_button is None:
+                        print("未找到刷新按钮")
+                        raise "未找到刷新按钮"
                     await refresh_button.click()
                     await asyncio.sleep(random.uniform(2, 4))
                     continue
@@ -815,6 +830,9 @@ async def verification_shape(page):
                 break
             else:
                 print(f"不支持{target_color}，重试")
+                if refresh_button is None:
+                    print("未找到刷新按钮")
+                    raise "未找到刷新按钮"
                 await refresh_button.click()
                 await asyncio.sleep(random.uniform(2, 4))
                 break
@@ -848,6 +866,9 @@ async def verification_shape(page):
             for wd in target_word:
                 if wd not in img_xy:
                     print(f"\"{wd}\"未找到，识别失败,刷新")
+                    if refresh_button is None:
+                        print("未找到刷新按钮")
+                        raise "未找到刷新按钮"
                     await refresh_button.click()
                     await asyncio.sleep(random.uniform(2, 4))
                     not_found = True
@@ -879,6 +900,9 @@ async def verification_shape(page):
                 )
                 if center_x is None and center_y is None:
                     print(f"识别失败,刷新")
+                    if refresh_button is None:
+                        print("未找到刷新按钮")
+                        raise "未找到刷新按钮"
                     await refresh_button.click()
                     await asyncio.sleep(random.uniform(2, 4))
                     continue
@@ -890,6 +914,9 @@ async def verification_shape(page):
                 break
             else:
                 print(f"不支持{shape_type},刷新中......")
+                if refresh_button is None:
+                    print("未找到刷新按钮")
+                    raise "未找到刷新按钮"
                 await refresh_button.click()
                 await asyncio.sleep(random.uniform(2, 4))
                 continue
@@ -1035,6 +1062,5 @@ async def main(workList, uid, oocr, oocrDet):
         os.remove("rgba_word_img.png")
     if os.path.exists("rgb_word_img.png"):
         os.remove("rgb_word_img.png")
-    await deleteSession(workList, uid)
     print("登录完成")
     await asyncio.sleep(10)
