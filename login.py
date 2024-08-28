@@ -45,10 +45,14 @@ supported_colors = {
 }
 
 
-async def deleteSession(workList, uid):
+async def deleteSessionDelay(workList, uid):
     s = workList.get(uid, "")
     if s:
         await asyncio.sleep(15)
+        del workList[uid]
+async def deleteSession(workList, uid):
+    s = workList.get(uid, "")
+    if s:
         del workList[uid]
 
 async def loginPhone(chromium_path, workList, uid, headless):
@@ -117,18 +121,18 @@ async def loginPhone(chromium_path, workList, uid, headless):
             ),
         }
     )
-    page = await browser.newPage()
-    await page.setViewport({"width": 360, "height": 640})
-    await page.goto(
-        "https://plogin.m.jd.com/login/login"
-    )
-    await typephoneuser(page, usernum)
+    try:
+        page = await browser.newPage()
+        await page.setViewport({"width": 360, "height": 640})
+        await page.goto(
+            "https://plogin.m.jd.com/login/login"
+        )
+        await typephoneuser(page, usernum)
 
-    IN_SMS_TIMES = 0
-    start_time = datetime.datetime.now()
-    sms_sent = False
-    while True:
-        try:
+        IN_SMS_TIMES = 0
+        start_time = datetime.datetime.now()
+        sms_sent = False
+        while True:
             now_time = datetime.datetime.now()
             print("循环检测中...")
             if (now_time - start_time).total_seconds() > 70:
@@ -198,12 +202,12 @@ async def loginPhone(chromium_path, workList, uid, headless):
                     break
 
             await asyncio.sleep(1)
-        except Exception as e:
-            print("异常退出")
-            print(e)
-            await browser.close()
-            await deleteSession(workList, uid)
-            raise e
+    except Exception as e:
+        print("异常退出")
+        print(e)
+        await browser.close()
+        await deleteSession(workList, uid)
+        raise e
 
     print("任务完成退出")
     await browser.close()
@@ -288,18 +292,18 @@ async def loginPassword(chromium_path, workList, uid, headless):
             ),
         }
     )
-    page = await browser.newPage()
-    await page.setViewport({"width": 360, "height": 640})
-    await page.goto(
-        "https://plogin.m.jd.com/login/login?appid=300&returnurl=https%3A%2F%2Fm.jd.com%2F&source=wq_passport"
-    )
-    await typeuser(page, usernum, passwd)
+    try:
+        page = await browser.newPage()
+        await page.setViewport({"width": 360, "height": 640})
+        await page.goto(
+            "https://plogin.m.jd.com/login/login"
+        )
+        await typeuser(page, usernum, passwd)
 
-    IN_SMS_TIMES = 0
-    start_time = datetime.datetime.now()
+        IN_SMS_TIMES = 0
+        start_time = datetime.datetime.now()
 
-    while True:
-        try:
+        while True:
             now_time = datetime.datetime.now()
             print("循环检测中...")
             if (now_time - start_time).total_seconds() > 70:
@@ -335,9 +339,9 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     workList[uid].status = "pending"
                     workList[uid].msg = "正在过形状、颜色检测"
                     if await verification_shape(page) == "notSupport":
-	                    print("即将重启浏览器重试")
-	                    await browser.close()
-	                    return "notSupport"
+                        print("即将重启浏览器重试")
+                        await browser.close()
+                        return "notSupport"
                     await page.waitFor(3000)
             if not sms_sent:
 
@@ -396,17 +400,16 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     break
 
             await asyncio.sleep(1)
-        except Exception as e:
-            print("异常退出")
-            print(e)
-            await browser.close()
-            await deleteSession(workList, uid)
-            raise e
+    except Exception as e:
+        print("异常退出")
+        print(e)
+        await browser.close()
+        await deleteSession(workList, uid)
+        raise e
         
     print("任务完成退出")
 
     await browser.close()
-    await deleteSession(workList, uid)
     return
 
 async def typephoneuser(page, usernum):
@@ -1062,5 +1065,6 @@ async def main(workList, uid, oocr, oocrDet):
         os.remove("rgba_word_img.png")
     if os.path.exists("rgb_word_img.png"):
         os.remove("rgb_word_img.png")
+    await deleteSessionDelay(workList, uid)
     print("登录完成")
     await asyncio.sleep(10)
