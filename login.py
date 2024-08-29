@@ -203,10 +203,12 @@ async def loginPhone(chromium_path, workList, uid, headless):
 
             await asyncio.sleep(1)
     except Exception as e:
+        workList[uid].msg = "服务器异常退出"
+        workList[uid].status = "error"
         print("异常退出")
         print(e)
         await browser.close()
-        await deleteSession(workList, uid)
+        await deleteSessionDelay(workList, uid)
         raise e
 
     print("任务完成退出")
@@ -404,7 +406,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
         print("异常退出")
         print(e)
         await browser.close()
-        await deleteSession(workList, uid)
+        await deleteSessionDelay(workList, uid)
         raise e
         
     print("任务完成退出")
