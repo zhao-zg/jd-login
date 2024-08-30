@@ -345,6 +345,11 @@ async def loginPassword(chromium_path, workList, uid, headless):
                         await browser.close()
                         return "notSupport"
                     await page.waitFor(3000)
+            elif await page.querySelector('.dialog'):
+                print("进入弹出对话框分支")
+                workList[uid].status = "error"
+                workList[uid].msg = "账号异常，自行检查"
+                break
             if not sms_sent:
 
                 if await page.J(".sub-title"):
@@ -1041,7 +1046,8 @@ async def main(workList, uid, oocr, oocrDet):
             return "unknown"
     print("判断初始化浏览器")
     chromium_path = await init_chrome()
-    headless = 'new'
+    #headless = 'new'
+    headless = False
     print("选择登录")
     
     try_time = 1
