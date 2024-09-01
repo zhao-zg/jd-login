@@ -1046,8 +1046,8 @@ async def main(workList, uid, oocr, oocrDet):
             return "unknown"
     print("判断初始化浏览器")
     chromium_path = await init_chrome()
-    #headless = 'new'
-    headless = False
+    headless = 'new'
+    #headless = False
     print("选择登录")
     
     try_time = 1
