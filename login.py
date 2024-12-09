@@ -318,7 +318,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                 workList[uid].status = "error"
                 workList[uid].msg = "登录超时"
                 logger.info("超时了，正在保存当前页面信息......")
-                dateTime = datetime.datetime.now()
+                dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
                 logger.info(f"页面截图保存到： {usernum}-screenshot-{dateTime}.png")
                 await page.screenshot({'path': f"{usernum}-screenshot-{dateTime}.png"})
                 logger.info(f"页面HTML保存到： {usernum}-html-{dateTime}.html")
@@ -363,7 +363,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                 elif await page.J('.drag-content'):
                     logger.info("进入旋转图片分支")
                     logger.info("正在保存当前页面信息......")
-                    dateTime = datetime.datetime.now()
+                    dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
                     logger.info(f"页面截图保存到： drag_{usernum}-screenshot-{dateTime}.png")
                     await page.screenshot({'path': f"drag_{usernum}-screenshot-{dateTime}.png"})
                     logger.info("即将重启浏览器重试")
@@ -486,6 +486,14 @@ async def loginPassword(chromium_path, workList, uid, headless):
         except Exception as e:
             logger.info("异常退出")
             logger.error(e)
+            logger.info("异常退出，正在保存当前页面信息......")
+            dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
+            logger.info(f"页面截图保存到： error_{usernum}-screenshot-{dateTime}.png")
+            await page.screenshot({'path': f"error_{usernum}-screenshot-{dateTime}.png"})
+            logger.info(f"页面HTML保存到： error_{usernum}-html-{dateTime}.html")
+            content = await page.content()
+            with open(f"error_{usernum}-html-{dateTime}.html", 'w', encoding='utf-8') as f:
+                f.write(content)
             workList[uid].status = "error"
             workList[uid].msg = "异常退出"
             break
@@ -588,7 +596,7 @@ async def sendSMSDirectly(page):
 
     try:
         while True:
-            if await page.xpath('//*[@id="captcha_modal"]/div/div[3]/div'):
+            if await page.xpath('//*[@id="small_img"]'):
                 await verification(page)
 
             elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
@@ -630,7 +638,7 @@ async def sendSMS(page):
 
     try:
         while True:
-            if await page.xpath('//*[@id="captcha_modal"]/div/div[3]/div'):
+            if await page.xpath('//*[@id="small_img"]'):
                 await verification(page)
 
             elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
