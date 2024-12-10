@@ -139,8 +139,8 @@ async def loginPhone(chromium_path, workList, uid, headless):
     IN_SMS_TIMES = 0
     start_time = datetime.datetime.now()
     sms_sent = False
-    while True:
-        try:
+    try:
+        while True:
             now_time = datetime.datetime.now()
             logger.info("循环检测中...")
             if (now_time - start_time).total_seconds() > 70:
@@ -316,9 +316,8 @@ async def loginPassword(chromium_path, workList, uid, headless):
 
     IN_SMS_TIMES = 0
     start_time = datetime.datetime.now()
-
-    while True:
-        try:
+    try:
+        while True:
             now_time = datetime.datetime.now()
             logger.info("循环检测中...")
             if (now_time - start_time).total_seconds() > 120:
@@ -491,20 +490,20 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     break
 
             await asyncio.sleep(1)
-        except Exception as e:
-            logger.info("异常退出")
-            logger.error(e)
-            logger.info("异常退出，正在保存当前页面信息......")
-            dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
-            logger.info(f"页面截图保存到： error_{usernum}-screenshot-{dateTime}.png")
-            await page.screenshot({'path': f"error_{usernum}-screenshot-{dateTime}.png"})
-            logger.info(f"页面HTML保存到： error_{usernum}-html-{dateTime}.html")
-            content = await page.content()
-            with open(f"error_{usernum}-html-{dateTime}.html", 'w', encoding='utf-8') as f:
-                f.write(content)
-            await browser.close()
-            await deleteSessionDelay(workList, uid)
-            raise e
+    except Exception as e:
+        logger.info("异常退出")
+        logger.error(e)
+        logger.info("异常退出，正在保存当前页面信息......")
+        dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
+        logger.info(f"页面截图保存到： error_{usernum}-screenshot-{dateTime}.png")
+        await page.screenshot({'path': f"error_{usernum}-screenshot-{dateTime}.png"})
+        logger.info(f"页面HTML保存到： error_{usernum}-html-{dateTime}.html")
+        content = await page.content()
+        with open(f"error_{usernum}-html-{dateTime}.html", 'w', encoding='utf-8') as f:
+            f.write(content)
+        await browser.close()
+        await deleteSessionDelay(workList, uid)
+        raise e
 
     logger.info("任务完成退出")
     logger.info("开始删除缓存文件......")
