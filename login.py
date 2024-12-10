@@ -49,8 +49,12 @@ supported_colors = {
     "黄色": ([25, 50, 50], [35, 255, 255]),
     "红色": ([0, 50, 50], [10, 255, 255]),
 }
-
-
+user_agents = [
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1",
+    "Mozilla/5.0 (X11; CrOS i686 2268.111.0) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+]
+    
 async def deleteSessionDelay(workList, uid):
     s = workList.get(uid, "")
     if s:
@@ -130,6 +134,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
     await page.setUserAgent(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
     )
+    
     await page.setViewport({"width": 360, "height": 640})
     await page.goto(
         "https://plogin.m.jd.com/login/login"
@@ -799,6 +804,9 @@ async def verification(page):
     await page.mouse.move(
         box["x"] + distance, box["y"], {"steps": 10}
     )
+    await page.waitFor(
+        random.randint(100, 500)
+    )
     await page.mouse.up()
     logger.info("过滑块结束")
 
@@ -1183,6 +1191,9 @@ async def main(workList, uid, oocr, oocrDet):
     logger.info("初始化浏览器。。。。。")
     chromium_path = await init_chrome()
     headless = 'new'
+    if platform.system() == "Windows":
+        headless = False
+    
     logger.info("进入选择登录方式流程")
 
     try_time = 1
