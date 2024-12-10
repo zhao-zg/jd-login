@@ -49,21 +49,6 @@ supported_colors = {
     "黄色": ([25, 50, 50], [35, 255, 255]),
     "红色": ([0, 50, 50], [10, 255, 255]),
 }
-user_agents = [
-    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1",
-    "Mozilla/5.0 (X11; CrOS i686 2268.111.0) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
-]
-    
-async def deleteSessionDelay(workList, uid):
-    s = workList.get(uid, "")
-    if s:
-        await asyncio.sleep(15)
-        del workList[uid]
-async def deleteSession(workList, uid):
-    s = workList.get(uid, "")
-    if s:
-        del workList[uid]
 
 async def loginPhone(chromium_path, workList, uid, headless):
     # 判断账号密码错误
@@ -97,7 +82,9 @@ async def loginPhone(chromium_path, workList, uid, headless):
     # 判断验证码超时
     async def needResendSMSCode(page):
         try:
-            return await page.querySelector('.getMsg-btn.text-btn.timer.active');
+            if await page.querySelector('.getMsg-btn.text-btn.timer.active'):
+                return True
+            return False
         except Exception as e:
             logger.info("needResendSMSCode " + str(e))
             return False
@@ -134,7 +121,6 @@ async def loginPhone(chromium_path, workList, uid, headless):
     await page.setUserAgent(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
     )
-    
     await page.setViewport({"width": 360, "height": 640})
     await page.goto(
         "https://plogin.m.jd.com/login/login"
@@ -144,8 +130,8 @@ async def loginPhone(chromium_path, workList, uid, headless):
     IN_SMS_TIMES = 0
     start_time = datetime.datetime.now()
     sms_sent = False
-    try:
-        while True:
+    while True:
+        try:
             now_time = datetime.datetime.now()
             logger.info("循环检测中...")
             if (now_time - start_time).total_seconds() > 70:
@@ -215,16 +201,29 @@ async def loginPhone(chromium_path, workList, uid, headless):
                     break
 
             await asyncio.sleep(1)
-    except Exception as e:
-        workList[uid].msg = "服务器异常退出"
-        workList[uid].status = "error"
-        print("异常退出")
-        print(e)
-        await browser.close()
-        await deleteSessionDelay(workList, uid)
-        raise e
+        except Exception as e:
+            logger.info("异常退出")
+            logger.error(e)
+            workList[uid].status = "error"
+            workList[uid].msg = "异常退出"
+            break
 
-    print("任务完成退出")
+    logger.info("任务完成退出")
+
+    logger.info("任务完成退出")
+    logger.info("开始删除缓存文件......")
+    if os.path.exists("image.png"):
+        os.remove("image.png")
+    if os.path.exists("template.png"):
+        os.remove("template.png")
+    if os.path.exists("shape_image.png"):
+        os.remove("shape_image.png")
+    if os.path.exists("rgba_word_img.png"):
+        os.remove("rgba_word_img.png")
+    if os.path.exists("rgb_word_img.png"):
+        os.remove("rgb_word_img.png")
+    logger.info("缓存文件已删除！")
+    logger.info("开始关闭浏览器....")
     await browser.close()
     logger.info("浏览器已关闭！")
     return
@@ -251,14 +250,8 @@ async def loginPassword(chromium_path, workList, uid, headless):
         # 判断验证码错误
     async def isStillInSMSCodeSentPage(page):
         try:
-            if await page.xpath('//*[@id="header"]/span[2]'):
-                element = await page.xpath('//*[@id="header"]/span[2]')
-                if element:
-                    text = await page.evaluate(
-                        "(element) => element.textContent", element[0]
-                    )
-                    if text == "手机短信验证":
-                        return True
+            if not await page.querySelector('.getMsg-btn.timer.active') and await page.querySelector('.acc-input.msgCode'):
+                return True
             return False
         except Exception as e:
             logger.info("isStillInSMSCodeSentPage " + str(e))
@@ -267,14 +260,8 @@ async def loginPassword(chromium_path, workList, uid, headless):
     # 判断验证码超时
     async def needResendSMSCode(page):
         try:
-            if await page.xpath('//*[@id="app"]/div/div[2]/div[2]/button'):
-                element = await page.xpath('//*[@id="app"]/div/div[2]/div[2]/button')
-                if element:
-                    text = await page.evaluate(
-                        "(element) => element.textContent", element[0]
-                    )
-                    if text == "获取验证码":
-                        return True
+            if await page.querySelector('.getMsg-btn.timer.active'):
+                return True
             return False
         except Exception as e:
             logger.info("needResendSMSCode " + str(e))
@@ -321,8 +308,9 @@ async def loginPassword(chromium_path, workList, uid, headless):
 
     IN_SMS_TIMES = 0
     start_time = datetime.datetime.now()
-    try:
-        while True:
+
+    while True:
+        try:
             now_time = datetime.datetime.now()
             logger.info("循环检测中...")
             if (now_time - start_time).total_seconds() > 120:
@@ -495,20 +483,20 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     break
 
             await asyncio.sleep(1)
-    except Exception as e:
-        logger.info("异常退出")
-        logger.error(e)
-        logger.info("异常退出，正在保存当前页面信息......")
-        dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
-        logger.info(f"页面截图保存到： error_{usernum}-screenshot-{dateTime}.png")
-        await page.screenshot({'path': f"error_{usernum}-screenshot-{dateTime}.png"})
-        logger.info(f"页面HTML保存到： error_{usernum}-html-{dateTime}.html")
-        content = await page.content()
-        with open(f"error_{usernum}-html-{dateTime}.html", 'w', encoding='utf-8') as f:
-            f.write(content)
-        await browser.close()
-        await deleteSessionDelay(workList, uid)
-        raise e
+        except Exception as e:
+            logger.info("异常退出")
+            logger.error(e)
+            logger.info("异常退出，正在保存当前页面信息......")
+            dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
+            logger.info(f"页面截图保存到： error_{usernum}-screenshot-{dateTime}.png")
+            await page.screenshot({'path': f"error_{usernum}-screenshot-{dateTime}.png"})
+            logger.info(f"页面HTML保存到： error_{usernum}-html-{dateTime}.html")
+            content = await page.content()
+            with open(f"error_{usernum}-html-{dateTime}.html", 'w', encoding='utf-8') as f:
+                f.write(content)
+            workList[uid].status = "error"
+            workList[uid].msg = "异常退出"
+            break
 
     logger.info("任务完成退出")
     logger.info("开始删除缓存文件......")
@@ -573,21 +561,22 @@ async def typephoneuser(page, usernum):
     await page.waitFor(random.randint(200, 500))
     await page.click(".getMsg-btn.text-btn.timer")
     await page.waitFor(random.randint(500, 1000))
+
 async def typeuser(page, usernum, passwd):
-    print("开始输入账号密码")
+    logger.info("开始输入账号密码")
     await page.waitForSelector(".J_ping.planBLogin")
     await page.click(".J_ping.planBLogin")
     await page.type(
-        "#username", usernum, {"delay": random.randint(10, 20)}
+        "#username", usernum, {"delay": random.randint(60, 121)}
     )
     await page.type(
-        "#pwd", passwd, {"delay": random.randint(10, 20)}
+        "#pwd", passwd, {"delay": random.randint(100, 151)}
     )
-    await page.waitFor(random.randint(200, 500))
+    await page.waitFor(random.randint(100, 2000))
     await page.click(".policy_tip-checkbox")
-    await page.waitFor(random.randint(200, 500))
+    await page.waitFor(random.randint(100, 2000))
     await page.click(".btn.J_ping.btn-active")
-    await page.waitFor(random.randint(500, 1000))
+    await page.waitFor(random.randint(100, 2000))
 
 
 async def sendSMSDirectly(page):
@@ -607,7 +596,7 @@ async def sendSMSDirectly(page):
 
     try:
         while True:
-            if await page.xpath('//*[@id="captcha_modal"]/div/div[3]/div'):
+            if await page.xpath('//*[@id="small_img"]'):
                 await verification(page)
 
             elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
@@ -649,7 +638,7 @@ async def sendSMS(page):
 
     try:
         while True:
-            if await page.xpath('//*[@id="captcha_modal"]/div/div[3]/div'):
+            if await page.xpath('//*[@id="small_img"]'):
                 await verification(page)
 
             elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
@@ -918,7 +907,9 @@ async def verification_shape(page):
 
     # 文字点选的重试次数，超过将重启浏览器
     retry_count = 10
-    for i in range(5):
+    i = 5
+    while i > 0:
+        i -= 1
         await page.waitForSelector("div.captcha_footer img")
         image_src = await page.Jeval(
             "#cpc_img", 'el => el.getAttribute("src")'
@@ -1191,9 +1182,6 @@ async def main(workList, uid, oocr, oocrDet):
     logger.info("初始化浏览器。。。。。")
     chromium_path = await init_chrome()
     headless = 'new'
-    if platform.system() == "Windows":
-        headless = False
-    
     logger.info("进入选择登录方式流程")
 
     try_time = 1
@@ -1209,16 +1197,5 @@ async def main(workList, uid, oocr, oocrDet):
         await asyncio.sleep(random.uniform(2, 4))
         logger.info(f"进行第{try_time}次重试")
         try_time += 1
-    if os.path.exists("image.png"):
-        os.remove("image.png")
-    if os.path.exists("template.png"):
-        os.remove("template.png")
-    if os.path.exists("shape_image.png"):
-        os.remove("shape_image.png")
-    if os.path.exists("rgba_word_img.png"):
-        os.remove("rgba_word_img.png")
-    if os.path.exists("rgb_word_img.png"):
-        os.remove("rgb_word_img.png")
-    await deleteSessionDelay(workList, uid)
-    print("登录完成")
+    logger.info("登录完成")
     await asyncio.sleep(10)
