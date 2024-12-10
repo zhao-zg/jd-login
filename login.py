@@ -23,6 +23,10 @@ import logging
 ocr = None
 ocrDet = None
 
+logger = logging.getLogger("login")
+simple_format = "[%(asctime)s][%(levelname)s][%(filename)s:%(lineno)d] %(message)s"
+logging.basicConfig(level=logging.INFO, format=simple_format, datefmt="%Y-%m-%d %H:%M:%S %z")
+
 # 支持的形状类型
 supported_types = [
     "三角形",
@@ -46,10 +50,6 @@ supported_colors = {
     "红色": ([0, 50, 50], [10, 255, 255]),
 }
 
-def log_print(msg):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print("[{}] {}".format(now, msg))
-
 async def loginPhone(chromium_path, workList, uid, headless):
     # 判断账号密码错误
     async def isWrongAccountOrPassword(page, verify=False):
@@ -66,7 +66,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
                     return await isWrongAccountOrPassword(page, verify=True)
             return False
         except Exception as e:
-            log_print("isWrongAccountOrPassword " + str(e))
+            logger.info("isWrongAccountOrPassword " + str(e))
             return False
 
     # 判断验证码错误
@@ -76,7 +76,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 return True
             return False
         except Exception as e:
-            log_print("isStillInSMSCodeSentPage " + str(e))
+            logger.info("isStillInSMSCodeSentPage " + str(e))
             return False
 
     # 判断验证码超时
@@ -86,7 +86,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 return True
             return False
         except Exception as e:
-            log_print("needResendSMSCode " + str(e))
+            logger.info("needResendSMSCode " + str(e))
             return False
 
     async def isSendSMSDirectly(page):
@@ -97,7 +97,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
                 return True  
             return False
         except Exception as e:
-            log_print("isSendSMSDirectly " + str(e))
+            logger.info("isSendSMSDirectly " + str(e))
             return False
 
     usernum = workList[uid].account
@@ -133,30 +133,30 @@ async def loginPhone(chromium_path, workList, uid, headless):
     while True:
         try:
             now_time = datetime.datetime.now()
-            log_print("循环检测中...")
+            logger.info("循环检测中...")
             if (now_time - start_time).total_seconds() > 70:
-                log_print("进入超时分支")
+                logger.info("进入超时分支")
                 workList[uid].status = "error"
                 workList[uid].msg = "登录超时"
                 break
 
             elif await page.J("#searchWrapper"):
-                log_print("进入成功获取cookie分支")
+                logger.info("进入成功获取cookie分支")
                 workList[uid].cookie = await getCookie(page)
                 workList[uid].status = "pass"
                 break
 
             elif await page.xpath('//*[@id="captcha_modal"]'):
-                log_print("进入安全验证分支")
+                logger.info("进入安全验证分支")
                 if await page.xpath('//*[@id="small_img"]'):
-                    log_print("进入过滑块分支")
+                    logger.info("进入过滑块分支")
 
                     workList[uid].status = "pending"
                     workList[uid].msg = "正在过滑块检测"
                     await verification(page)
                     await page.waitFor(2000)
                 elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
-                    log_print("进入点形状、颜色验证分支")
+                    logger.info("进入点形状、颜色验证分支")
 
                     workList[uid].status = "pending"
                     workList[uid].msg = "正在过形状、颜色检测"
@@ -165,14 +165,14 @@ async def loginPhone(chromium_path, workList, uid, headless):
                     await page.waitFor(2000)
                 continue
             elif await page.querySelector('.dialog'):
-                log_print("进入弹出对话框分支")
+                logger.info("进入弹出对话框分支")
                 workList[uid].status = "error"
                 workList[uid].msg = "账号异常，自行检查"
                 break
             if False == sms_sent:
                 button = await page.querySelector('.getMsg-btn.text-btn.timer.active')
                 if button is None:
-                    log_print("进入直接发短信分支")
+                    logger.info("进入直接发短信分支")
                     if not workList[uid].isAuto:
                         workList[uid].status = "SMS"
                         workList[uid].msg = "需要短信验证"
@@ -182,11 +182,11 @@ async def loginPhone(chromium_path, workList, uid, headless):
                     else:
                         workList[uid].status = "error"
                         workList[uid].msg = "自动续期时不能使用短信验证"
-                        log_print("自动续期时不能使用短信验证")
+                        logger.info("自动续期时不能使用短信验证")
                         break
             else:
                 if await isStillInSMSCodeSentPage(page):
-                    log_print("进入验证码错误分支")
+                    logger.info("进入验证码错误分支")
                     IN_SMS_TIMES += 1
                     if IN_SMS_TIMES % 3 == 0:
                         workList[uid].SMS_CODE = None
@@ -195,23 +195,23 @@ async def loginPhone(chromium_path, workList, uid, headless):
                         await typePhoneSMScode(page, workList, uid)
 
                 elif await needResendSMSCode(page):
-                    log_print("进入验证码超时分支")
+                    logger.info("进入验证码超时分支")
                     workList[uid].status = "error"
                     workList[uid].msg = "验证码超时，请重新开始"
                     break
 
             await asyncio.sleep(1)
         except Exception as e:
-            log_print("异常退出")
+            logger.info("异常退出")
             logger.error(e)
             workList[uid].status = "error"
             workList[uid].msg = "异常退出"
             break
 
-    log_print("任务完成退出")
+    logger.info("任务完成退出")
 
-    log_print("任务完成退出")
-    log_print("开始删除缓存文件......")
+    logger.info("任务完成退出")
+    logger.info("开始删除缓存文件......")
     if os.path.exists("image.png"):
         os.remove("image.png")
     if os.path.exists("template.png"):
@@ -222,10 +222,10 @@ async def loginPhone(chromium_path, workList, uid, headless):
         os.remove("rgba_word_img.png")
     if os.path.exists("rgb_word_img.png"):
         os.remove("rgb_word_img.png")
-    log_print("缓存文件已删除！")
-    log_print("开始关闭浏览器....")
+    logger.info("缓存文件已删除！")
+    logger.info("开始关闭浏览器....")
     await browser.close()
-    log_print("浏览器已关闭！")
+    logger.info("浏览器已关闭！")
     return
 
 async def loginPassword(chromium_path, workList, uid, headless):
@@ -244,7 +244,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     return await isWrongAccountOrPassword(page, verify=True)
             return False
         except Exception as e:
-            log_print("isWrongAccountOrPassword " + str(e))
+            logger.info("isWrongAccountOrPassword " + str(e))
             return False
 
         # 判断验证码错误
@@ -254,7 +254,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                 return True
             return False
         except Exception as e:
-            log_print("isStillInSMSCodeSentPage " + str(e))
+            logger.info("isStillInSMSCodeSentPage " + str(e))
             return False
 
     # 判断验证码超时
@@ -264,7 +264,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                 return True
             return False
         except Exception as e:
-            log_print("needResendSMSCode " + str(e))
+            logger.info("needResendSMSCode " + str(e))
             return False
 
     async def isSendSMSDirectly(page):
@@ -275,7 +275,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                 return True
             return False
         except Exception as e:
-            log_print("isSendSMSDirectly " + str(e))
+            logger.info("isSendSMSDirectly " + str(e))
             return False
 
     usernum = workList[uid].account
@@ -312,12 +312,12 @@ async def loginPassword(chromium_path, workList, uid, headless):
     while True:
         try:
             now_time = datetime.datetime.now()
-            log_print("循环检测中...")
+            logger.info("循环检测中...")
             if (now_time - start_time).total_seconds() > 120:
-                log_print("进入超时分支")
+                logger.info("进入超时分支")
                 workList[uid].status = "error"
                 workList[uid].msg = "登录超时"
-                log_print("超时了，正在保存当前页面信息......")
+                logger.info("超时了，正在保存当前页面信息......")
                 dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
                 logger.info(f"页面截图保存到： {usernum}-screenshot-{dateTime}.png")
                 await page.screenshot({'path': f"{usernum}-screenshot-{dateTime}.png"})
@@ -328,22 +328,22 @@ async def loginPassword(chromium_path, workList, uid, headless):
                 break
 
             elif await page.J("#searchWrapper"):
-                log_print("进入成功获取cookie分支")
+                logger.info("进入成功获取cookie分支")
                 workList[uid].cookie = await getCookie(page)
                 workList[uid].status = "pass"
                 break
 
             elif await isWrongAccountOrPassword(page):
-                log_print("进入账号密码不正确分支")
+                logger.info("进入账号密码不正确分支")
 
                 workList[uid].status = "error"
                 workList[uid].msg = "账号或密码不正确"
                 break
 
             elif await page.xpath('//*[@id="captcha_modal"]'):
-                log_print("进入安全验证分支")
+                logger.info("进入安全验证分支")
                 if await page.xpath('//*[@id="small_img"]'):
-                    log_print("进入过滑块分支")
+                    logger.info("进入过滑块分支")
 
                     workList[uid].status = "pending"
                     workList[uid].msg = "正在过滑块检测"
@@ -351,27 +351,27 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     await page.waitFor(3000)
 
                 elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
-                    log_print("进入点形状、颜色验证分支")
+                    logger.info("进入点形状、颜色验证分支")
                     workList[uid].status = "pending"
                     workList[uid].msg = "正在过形状、颜色检测"
                     if await verification_shape(page) == "notSupport":
-                        log_print("即将重启浏览器重试")
+                        logger.info("即将重启浏览器重试")
                         await browser.close()
                         return "notSupport"
                     await page.waitFor(3000)
 
                 elif await page.J('.drag-content'):
-                    log_print("进入旋转图片分支")
-                    log_print("正在保存当前页面信息......")
+                    logger.info("进入旋转图片分支")
+                    logger.info("正在保存当前页面信息......")
                     dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
                     logger.info(f"页面截图保存到： drag_{usernum}-screenshot-{dateTime}.png")
                     await page.screenshot({'path': f"drag_{usernum}-screenshot-{dateTime}.png"})
-                    log_print("即将重启浏览器重试")
+                    logger.info("即将重启浏览器重试")
                     await browser.close()
                     return "notSupport"
 
             elif await page.J('.alert-body #alertMsg'):
-                log_print("进入弹框分支")
+                logger.info("进入弹框分支")
                 element = await page.J('.alert-body #alertMsg')
                 if element:
                     alertMsg = await page.evaluate(
@@ -383,7 +383,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                         workList[uid].msg = "发送短信验证码过于频繁，请稍后再试"
                         break
                     elif alertMsg == "身份证号输入错误,若包含字母X,请输入大写字母":
-                        log_print("进入身份证号错误分支")
+                        logger.info("进入身份证号错误分支")
                         workList[uid].ID_CARD = None
                         workList[uid].status = "wrongIDCard"
                         workList[uid].msg = "身份证号输入错误,若包含字母X,请输入大写字母"
@@ -397,7 +397,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
                         await page.waitFor(3000)
                         await typeIDCard(page, workList, uid)
                         if workList[uid].status == "error":
-                            log_print("输入身份证超时")
+                            logger.info("输入身份证超时")
                             break
                     elif alertMsg == "您已超过当日请求上限，请明天再试":
                         workList[uid].status = "error"
@@ -411,7 +411,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
 
             # 需要身份证验证
             if await page.J(".sub-title") and await page.J('.icon-default.icon-userid'):
-                log_print("进入身份证号验证分支")
+                logger.info("进入身份证号验证分支")
                 if not workList[uid].isAuto:
                     await page.click(".icon-default.icon-userid")
                     workList[uid].status = "IDCard"
@@ -419,23 +419,23 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     await page.waitFor(3000)
                     await typeIDCard(page, workList, uid)
                     if workList[uid].status == "error":
-                        log_print("输入身份证超时")
+                        logger.info("输入身份证超时")
                         break
                 else:
                     workList[uid].status = "error"
                     workList[uid].msg = "自动续期时不能使用身份证号验证"
-                    log_print("自动续期时不能使用身份证号验证")
+                    logger.info("自动续期时不能使用身份证号验证")
                     break
 
             if not sms_sent:
                 if await page.J(".sub-title") and not await page.J('.icon-default.icon-userid'):
-                    log_print("进入选择短信验证分支")
+                    logger.info("进入选择短信验证分支")
                     if not workList[uid].isAuto:
                         workList[uid].status = "SMS"
                         workList[uid].msg = "需要短信验证"
 
                         if await sendSMS(page) == "notSupport":
-                            log_print("即将重启浏览器重试")
+                            logger.info("即将重启浏览器重试")
                             await browser.close()
                             return "notSupport"
                         await page.waitFor(3000)
@@ -445,16 +445,16 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     else:
                         workList[uid].status = "error"
                         workList[uid].msg = "自动续期时不能使用短信验证"
-                        log_print("自动续期时不能使用短信验证")
+                        logger.info("自动续期时不能使用短信验证")
                         break
                 elif await isSendSMSDirectly(page):
-                    log_print("进入直接发短信分支")
+                    logger.info("进入直接发短信分支")
 
                     if not workList[uid].isAuto:
                         workList[uid].status = "SMS"
                         workList[uid].msg = "需要短信验证"
                         if await sendSMSDirectly(page) == "notSupport":
-                            log_print("即将重启浏览器重试")
+                            logger.info("即将重启浏览器重试")
                             await browser.close()
                             return "notSupport"
                         await page.waitFor(3000)
@@ -464,11 +464,11 @@ async def loginPassword(chromium_path, workList, uid, headless):
                     else:
                         workList[uid].status = "error"
                         workList[uid].msg = "自动续期时不能使用短信验证"
-                        log_print("自动续期时不能使用短信验证")
+                        logger.info("自动续期时不能使用短信验证")
                         break
             else:
                 if await isStillInSMSCodeSentPage(page):
-                    log_print("进入验证码错误分支")
+                    logger.info("进入验证码错误分支")
                     IN_SMS_TIMES += 1
                     if IN_SMS_TIMES % 3 == 0:
                         workList[uid].SMS_CODE = None
@@ -477,16 +477,16 @@ async def loginPassword(chromium_path, workList, uid, headless):
                         await typeSMScode(page, workList, uid)
 
                 elif await needResendSMSCode(page):
-                    log_print("进入验证码超时分支")
+                    logger.info("进入验证码超时分支")
                     workList[uid].status = "error"
                     workList[uid].msg = "验证码超时，请重新开始"
                     break
 
             await asyncio.sleep(1)
         except Exception as e:
-            log_print("异常退出")
+            logger.info("异常退出")
             logger.error(e)
-            log_print("异常退出，正在保存当前页面信息......")
+            logger.info("异常退出，正在保存当前页面信息......")
             dateTime = datetime.datetime.now().strftime('%Y%m%d %H_%M_%S.%f')
             logger.info(f"页面截图保存到： error_{usernum}-screenshot-{dateTime}.png")
             await page.screenshot({'path': f"error_{usernum}-screenshot-{dateTime}.png"})
@@ -498,8 +498,8 @@ async def loginPassword(chromium_path, workList, uid, headless):
             workList[uid].msg = "异常退出"
             break
 
-    log_print("任务完成退出")
-    log_print("开始删除缓存文件......")
+    logger.info("任务完成退出")
+    logger.info("开始删除缓存文件......")
     if os.path.exists("image.png"):
         os.remove("image.png")
     if os.path.exists("template.png"):
@@ -510,17 +510,17 @@ async def loginPassword(chromium_path, workList, uid, headless):
         os.remove("rgba_word_img.png")
     if os.path.exists("rgb_word_img.png"):
         os.remove("rgb_word_img.png")
-    log_print("缓存文件已删除！")
-    log_print("开始关闭浏览器....")
+    logger.info("缓存文件已删除！")
+    logger.info("开始关闭浏览器....")
     await browser.close()
-    log_print("浏览器已关闭！")
+    logger.info("浏览器已关闭！")
     return
 
 async def typeIDCard(page, workList, uid):
-    log_print("开始输入身份证")
+    logger.info("开始输入身份证")
 
     async def get_verification_IDCard(workList, uid):
-        log_print("开始从全局变量获取身份证")
+        logger.info("开始从全局变量获取身份证")
         retry = 60
         while not workList[uid].ID_CARD and not retry < 0:
             await asyncio.sleep(1)
@@ -539,7 +539,7 @@ async def typeIDCard(page, workList, uid):
 
     workList[uid].status = "pending"
     workList[uid].msg = "正在通过身份证验证"
-    log_print("正在输入身份证。。。。。")
+    logger.info("正在输入身份证。。。。。")
     input_elements = await page.JJ('.input-container.id-wrap > div')
     await input_elements[0].click()
     for ID in ID_CARD:
@@ -563,7 +563,7 @@ async def typephoneuser(page, usernum):
     await page.waitFor(random.randint(500, 1000))
 
 async def typeuser(page, usernum, passwd):
-    log_print("开始输入账号密码")
+    logger.info("开始输入账号密码")
     await page.waitForSelector(".J_ping.planBLogin")
     await page.click(".J_ping.planBLogin")
     await page.type(
@@ -592,7 +592,7 @@ async def sendSMSDirectly(page):
         await page.waitFor(3000)
 
     await preSendSMS(page)
-    log_print("开始发送验证码")
+    logger.info("开始发送验证码")
 
     try:
         while True:
@@ -614,7 +614,7 @@ async def sendSMSDirectly(page):
 
 async def sendSMS(page):
     async def preSendSMS(page):
-        log_print("进行发送验证码前置操作")
+        logger.info("进行发送验证码前置操作")
         await page.waitForXPath(
             '//*[@id="app"]/div/div[2]/div[2]/span/a'
         )
@@ -634,7 +634,7 @@ async def sendSMS(page):
         await page.waitFor(3000)
 
     await preSendSMS(page)
-    log_print("开始发送验证码")
+    logger.info("开始发送验证码")
 
     try:
         while True:
@@ -654,10 +654,10 @@ async def sendSMS(page):
         raise e
 
 async def typePhoneSMScode(page, workList, uid):
-    log_print("开始输入验证码")
+    logger.info("开始输入验证码")
 
     async def get_verification_code(workList, uid):
-        log_print("开始从全局变量获取验证码")
+        logger.info("开始从全局变量获取验证码")
         retry = 60
         while not workList[uid].SMS_CODE and not retry < 0:
             await asyncio.sleep(1)
@@ -683,10 +683,10 @@ async def typePhoneSMScode(page, workList, uid):
     await page.waitFor(random.randint(2, 3) * 1000)
 
 async def typeSMScode(page, workList, uid):
-    log_print("开始输入验证码")
+    logger.info("开始输入验证码")
 
     async def get_verification_code(workList, uid):
-        log_print("开始从全局变量获取验证码")
+        logger.info("开始从全局变量获取验证码")
         retry = 60
         while not workList[uid].SMS_CODE and not retry < 0:
             await asyncio.sleep(1)
@@ -712,13 +712,13 @@ async def typeSMScode(page, workList, uid):
         if input_elements:
             input_value = await input_elements[0].getProperty("value")
             if input_value:
-                log_print("清除验证码输入框中已有的验证码")
+                logger.info("清除验证码输入框中已有的验证码")
                 await page.evaluate(
                     '(element) => element.value = ""', input_elements[0]
                 )
 
     except Exception as e:
-        log_print("typeSMScode" + str(e))
+        logger.info("typeSMScode" + str(e))
 
     await input_elements[0].type(code)
     await page.waitForXPath('//*[@id="app"]/div/div[2]/a[1]')
@@ -729,7 +729,7 @@ async def typeSMScode(page, workList, uid):
 
 
 async def verification(page):
-    log_print("开始过滑块")
+    logger.info("开始过滑块")
 
     async def get_distance():
         img = cv2.imread("image.png", 0)
@@ -797,11 +797,11 @@ async def verification(page):
         random.randint(100, 500)
     )
     await page.mouse.up()
-    log_print("过滑块结束")
+    logger.info("过滑块结束")
 
 
 async def verification_shape(page):
-    log_print("开始过颜色、形状验证")
+    logger.info("开始过颜色、形状验证")
 
     def get_shape_location_by_type(img_path, type: str):
         def sort_rectangle_vertices(vertices):
@@ -942,7 +942,7 @@ async def verification_shape(page):
         if button is None:
             button = await page.querySelector(".sure_btn")
         if button is None:
-            log_print("未找到提交按钮")
+            logger.info("未找到提交按钮")
             raise "未找到提交按钮"
         refresh_button = await page.querySelector("div.captcha_header img.jcap_refresh")
         if refresh_button is None:
@@ -959,9 +959,9 @@ async def verification_shape(page):
                     "shape_image.png", target_color
                 )
                 if center_x is None and center_y is None:
-                    log_print("识别失败，刷新")
+                    logger.info("识别失败，刷新")
                     if refresh_button is None:
-                        log_print("未找到刷新按钮")
+                        logger.info("未找到刷新按钮")
                         raise "未找到刷新按钮"
                     await refresh_button.click()
                     await asyncio.sleep(random.uniform(2, 4))
@@ -975,17 +975,17 @@ async def verification_shape(page):
             else:
                 logger.info(f"不支持{target_color}，重试")
                 if refresh_button is None:
-                    log_print("未找到刷新按钮")
+                    logger.info("未找到刷新按钮")
                     raise "未找到刷新按钮"
                 await refresh_button.click()
                 await asyncio.sleep(random.uniform(2, 4))
                 break
         elif word.find("依次") > 0:
             if retry_count < 1:
-                log_print("文字点选重试失败")
+                logger.info("文字点选重试失败")
                 return "notSupport"
             i = 3
-            log_print("进入文字点选")
+            logger.info("进入文字点选")
             logger.info(f"文字点选第{11 - retry_count}次尝试")
             retry_count -= 1
             target_word = word.replace("\"", "")[-4:]
@@ -1011,7 +1011,7 @@ async def verification_shape(page):
                 if wd not in img_xy:
                     logger.info(f"\"{wd}\"未找到，识别失败,刷新")
                     if refresh_button is None:
-                        log_print("未找到刷新按钮")
+                        logger.info("未找到刷新按钮")
                         raise "未找到刷新按钮"
                     await refresh_button.click()
                     await asyncio.sleep(random.uniform(2, 4))
@@ -1025,7 +1025,7 @@ async def verification_shape(page):
                 os.remove("gray.png")
             if not_found:
                 continue
-            log_print("文字点选识别正常")
+            logger.info("文字点选识别正常")
             for wd, point in click_points.items():
                 logger.info(f"点击\"{wd}\",坐标{point[0]}:{point[1]}")
                 await page.mouse.click(point[0], point[1])
@@ -1045,7 +1045,7 @@ async def verification_shape(page):
                 if center_x is None and center_y is None:
                     logger.info(f"识别失败,刷新")
                     if refresh_button is None:
-                        log_print("未找到刷新按钮")
+                        logger.info("未找到刷新按钮")
                         raise "未找到刷新按钮"
                     await refresh_button.click()
                     await asyncio.sleep(random.uniform(2, 4))
@@ -1059,12 +1059,12 @@ async def verification_shape(page):
             else:
                 logger.info(f"不支持{shape_type},刷新中......")
                 if refresh_button is None:
-                    log_print("未找到刷新按钮")
+                    logger.info("未找到刷新按钮")
                     raise "未找到刷新按钮"
                 await refresh_button.click()
                 await asyncio.sleep(random.uniform(2, 4))
                 continue
-    log_print("过图形结束")
+    logger.info("过图形结束")
 
 
 async def getCookie(page):
@@ -1096,8 +1096,8 @@ async def download_file(url, file_path):
                     file.write(chunk)
                     downloaded_size += len(chunk)
                     progress = (downloaded_size / file_size) * 100
-                    logger.info(f"已下载{progress:.2f}%...", end="\r")
-    log_print("下载完成，进行解压安装....")
+                    logger.info(f"已下载{progress:.2f}%...")
+    logger.info("下载完成，进行解压安装....")
 
 
 async def main(workList, uid, oocr, oocrDet):
@@ -1132,7 +1132,7 @@ async def main(workList, uid, oocr, oocrDet):
             if os.path.exists(chrome_exe):
                 return chrome_exe
             else:
-                log_print("貌似第一次使用，未找到chrome，正在下载chrome浏览器....")
+                logger.info("貌似第一次使用，未找到chrome，正在下载chrome浏览器....")
 
                 chromeurl = "https://mirrors.huaweicloud.com/chromium-browser-snapshots/Win_x64/588429/chrome-win32.zip"
                 target_file = "chrome-win.zip"
@@ -1144,7 +1144,7 @@ async def main(workList, uid, oocr, oocrDet):
                     source_item = os.path.join(chmod_dir, item)
                     destination_item = os.path.join(chrome_dir, item)
                     os.rename(source_item, destination_item)
-                log_print("解压安装完成")
+                logger.info("解压安装完成")
                 await asyncio.sleep(1)
                 return chrome_exe
 
@@ -1158,8 +1158,8 @@ async def main(workList, uid, oocr, oocrDet):
             if os.path.isfile(chrome_path):
                 return chrome_path
             else:
-                log_print("貌似第一次使用，未找到chrome，正在下载chrome浏览器....")
-                log_print("文件位于github，请耐心等待，如遇到网络问题可到项目地址手动下载")
+                logger.info("貌似第一次使用，未找到chrome，正在下载chrome浏览器....")
+                logger.info("文件位于github，请耐心等待，如遇到网络问题可到项目地址手动下载")
                 download_url = "https://mirrors.huaweicloud.com/chromium-browser-snapshots/Linux_x64/884014/chrome-linux.zip"
                 if 'arm' in platform.machine():
                     download_url = "https://playwright.azureedge.net/builds/chromium/1088/chromium-linux-arm64.zip"
@@ -1179,23 +1179,23 @@ async def main(workList, uid, oocr, oocrDet):
         else:
             return "unknown"
 
-    log_print("初始化浏览器。。。。。")
+    logger.info("初始化浏览器。。。。。")
     chromium_path = await init_chrome()
     headless = 'new'
-    log_print("进入选择登录方式流程")
+    logger.info("进入选择登录方式流程")
 
     try_time = 1
     while True:
         if workList[uid].type == "phone":
-            log_print("选择手机号登录")
+            logger.info("选择手机号登录")
             result = await loginPhone(chromium_path, workList, uid, headless)
         elif workList[uid].type == "password":
-            log_print("选择密码登录")
+            logger.info("选择密码登录")
             result = await loginPassword(chromium_path, workList, uid, headless)
         if result != "notSupport" or try_time > 5:
             break
         await asyncio.sleep(random.uniform(2, 4))
         logger.info(f"进行第{try_time}次重试")
         try_time += 1
-    log_print("登录完成")
+    logger.info("登录完成")
     await asyncio.sleep(10)
