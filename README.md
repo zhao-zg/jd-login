@@ -21,7 +21,7 @@ services:
       libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
       libatspi2.0-0 libxshmfence1 && python -m pip install --upgrade pip && pip
       install pyppeteer Pillow asyncio aiohttp opencv-python-headless ddddocr
-      quart && rm -rf * && wget -O api.py
+      quart requests fake_useragent && rm -rf * && wget -O api.py
       https://raw.githubusercontent.com/zhao-zg/jd-login/main/api.py
       && wget -O login.py
       https://raw.githubusercontent.com/zhao-zg/jd-login/main/login.py
@@ -43,7 +43,7 @@ services:
     environment:
       TZ: Asia/Shanghai
     command: >
-      sh -c "rm -rf * && wget -O api.py
+      sh -c "rm -rf * && wget -O api.py && pip requests fake_useragent &&
       https://raw.githubusercontent.com/zhao-zg/jd-login/main/api.py && wget -O
       login.py https://raw.githubusercontent.com/zhao-zg/jd-login/main/login.py
       && python api.py"
