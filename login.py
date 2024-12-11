@@ -28,14 +28,6 @@ logger = logging.getLogger("login")
 simple_format = "[%(asctime)s][%(levelname)s][%(filename)s:%(lineno)d] %(message)s"
 logging.basicConfig(level=logging.INFO, format=simple_format, datefmt="%Y-%m-%d %H:%M:%S %z")
 
-user_agents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
-]
 # 支持的形状类型
 supported_types = [
     "三角形",
@@ -307,7 +299,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
     )
     page = await browser.newPage()
     await page.setUserAgent(
-        UserAgent().random
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
     )
     await page.setViewport({"width": 360, "height": 640})
     await page.goto(
