@@ -213,6 +213,8 @@ async def loginPhone(chromium_path, workList, uid, headless):
             logger.info("异常退出")
             logger.error(e)
             await deleteSession(workList, uid)
+            workList[uid].status = "error"
+            workList[uid].msg = "异常退出"
             break
 
     logger.info("任务完成退出")
@@ -502,6 +504,8 @@ async def loginPassword(chromium_path, workList, uid, headless):
             with open(f"error_{usernum}-html-{dateTime}.html", 'w', encoding='utf-8') as f:
                 f.write(content)
             await deleteSession(workList, uid)
+            workList[uid].status = "error"
+            workList[uid].msg = "异常退出"
             break
 
     logger.info("任务完成退出")
