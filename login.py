@@ -51,6 +51,13 @@ supported_colors = {
     "红色": ([0, 50, 50], [10, 255, 255]),
 }
 
+
+async def deleteSession(workList, uid):
+    s = workList.get(uid, "")
+    if s:
+        await asyncio.sleep(15)
+        del workList[uid]
+
 async def loginPhone(chromium_path, workList, uid, headless):
     # 判断账号密码错误
     async def isWrongAccountOrPassword(page, verify=False):
@@ -205,8 +212,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
         except Exception as e:
             logger.info("异常退出")
             logger.error(e)
-            workList[uid].status = "error"
-            workList[uid].msg = "异常退出"
+            await deleteSession(workList, uid)
             break
 
     logger.info("任务完成退出")
@@ -495,8 +501,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
             content = await page.content()
             with open(f"error_{usernum}-html-{dateTime}.html", 'w', encoding='utf-8') as f:
                 f.write(content)
-            workList[uid].status = "error"
-            workList[uid].msg = "异常退出"
+            await deleteSession(workList, uid)
             break
 
     logger.info("任务完成退出")
@@ -1200,5 +1205,16 @@ async def main(workList, uid, oocr, oocrDet):
         await asyncio.sleep(random.uniform(2, 4))
         logger.info(f"进行第{try_time}次重试")
         try_time += 1
+    if os.path.exists("image.png"):
+        os.remove("image.png")
+    if os.path.exists("template.png"):
+        os.remove("template.png")
+    if os.path.exists("shape_image.png"):
+        os.remove("shape_image.png")
+    if os.path.exists("rgba_word_img.png"):
+        os.remove("rgba_word_img.png")
+    if os.path.exists("rgb_word_img.png"):
+        os.remove("rgb_word_img.png")
+    await deleteSession(workList, uid)
     logger.info("登录完成")
     await asyncio.sleep(10)
