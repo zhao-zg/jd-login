@@ -43,11 +43,11 @@ services:
     environment:
       TZ: Asia/Shanghai
     command: >
-      sh -c "pip install requests fake_useragent && rm -rf *
+      sh -c "rm -rf *
       && wget -O api.py https://raw.githubusercontent.com/zhao-zg/jd-login/main/api.py
       && wget -O login.py https://raw.githubusercontent.com/zhao-zg/jd-login/main/login.py
       && python api.py"
 networks: {}
 ```
 
-# 感谢作者小九九
+# 感谢原作者小九九
