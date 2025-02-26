@@ -808,7 +808,7 @@ async def verification(page):
         box["x"] + distance, box["y"], {"steps": 10}
     )
     await page.waitFor(
-        random.randint(200, 500)
+        random.randint(500, 1000)
     )
     await page.mouse.up()
     logger.info("过滑块结束")
