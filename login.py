@@ -792,7 +792,7 @@ async def verification(page):
     resized_image.save("template.png")
     await page.waitFor(100)
     el = await page.querySelector(
-        "#captcha_modal > div > div.captcha_footer > div > img"
+        "#captcha_modal > div > div.captcha_footer > div > div.sp-msg"
     )
     box = await el.boundingBox()
     distance = await get_distance()
@@ -808,7 +808,7 @@ async def verification(page):
         box["x"] + distance, box["y"], {"steps": 10}
     )
     await page.waitFor(
-        random.randint(500, 1000)
+        random.randint(400, 1000)
     )
     await page.mouse.up()
     logger.info("过滑块结束")
