@@ -612,11 +612,9 @@ async def sendSMSDirectly(page):
         while True:
             if await page.xpath('//*[@id="small_img"]'):
                 await verification(page)
-
-            elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
+            elif await page.xpath('//*[@id="captcha_modal"]/div/div[4]/button'):
                 if await verification_shape(page) == "notSupport":
                     return "notSupport"
-
             else:
                 break
 
@@ -654,11 +652,9 @@ async def sendSMS(page):
         while True:
             if await page.xpath('//*[@id="small_img"]'):
                 await verification(page)
-
-            elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
+            elif await page.xpath('//*[@id="captcha_modal"]/div/div[4]/button'):
                 if await verification_shape(page) == "notSupport":
                     return "notSupport"
-
             else:
                 break
 
