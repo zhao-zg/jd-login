@@ -794,7 +794,7 @@ async def verification(page):
     el = await page.querySelector(
         "#captcha_modal > div > div.captcha_footer > div > div.sp-msg"
     )
-    if not el：
+    if not el:
         el = await page.querySelector(
             "#captcha_modal > div > div.captcha_footer > div > img"
         )
