@@ -794,6 +794,10 @@ async def verification(page):
     el = await page.querySelector(
         "#captcha_modal > div > div.captcha_footer > div > div.sp-msg"
     )
+    if not el：
+        el = await page.querySelector(
+            "#captcha_modal > div > div.captcha_footer > div > img"
+        )
     box = await el.boundingBox()
     distance = await get_distance()
     await page.mouse.move(box["x"] + 10, box["y"] + 10)
