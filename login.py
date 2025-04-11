@@ -612,9 +612,11 @@ async def sendSMSDirectly(page):
         while True:
             if await page.xpath('//*[@id="small_img"]'):
                 await verification(page)
-            elif await page.xpath('//*[@id="captcha_modal"]/div/div[4]/button'):
+
+            elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
                 if await verification_shape(page) == "notSupport":
                     return "notSupport"
+
             else:
                 break
 
@@ -652,9 +654,11 @@ async def sendSMS(page):
         while True:
             if await page.xpath('//*[@id="small_img"]'):
                 await verification(page)
-            elif await page.xpath('//*[@id="captcha_modal"]/div/div[4]/button'):
+
+            elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
                 if await verification_shape(page) == "notSupport":
                     return "notSupport"
+
             else:
                 break
 
@@ -798,17 +802,16 @@ async def verification(page):
     distance = await get_distance()
     await page.mouse.move(box["x"] + 10, box["y"] + 10)
     await page.mouse.down()
-    await page.mouse.move(
-        box["x"] + distance + random.uniform(3, 15), box["y"], {"steps": 10}
-    )
+    steps=50
+    for i in range(steps):
+        t=i/steps
+        if t<0.7:
+            x_step=distance*(t**1.2)+random.uniform(-2, 2)
+        else:
+            x_step=distance*(0.7+(t-0.7))+random.uniform(-1, 1)
+        await page.mouse.move(box["x"]+x_step,box["y"],{"steps": 2})
     await page.waitFor(
-        random.randint(100, 500)
-    )
-    await page.mouse.move(
-        box["x"] + distance, box["y"], {"steps": 10}
-    )
-    await page.waitFor(
-        random.randint(400, 1000)
+        random.randint(100, 300)
     )
     await page.mouse.up()
     logger.info("过滑块结束")
