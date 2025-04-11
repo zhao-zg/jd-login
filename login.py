@@ -825,10 +825,10 @@ async def verification(page):
             noise = random.uniform(-1, 1) * (1 - t)  # 扰动衰减至0
         
         # 应用噪声（距离越大抖动幅度越大）
-        current_x += noise * (distance / 200)  # 以200px为基准比例
+        current_x += noise
         
         # 移动鼠标（Y轴始终不变）
-        await page.mouse.move(current_x, start_y, steps=2)
+        await page.mouse.move(current_x, start_y, steps=1)
     
     # 双重校准终点（应对任何残余误差）
     await page.mouse.move(end_x, start_y, steps=5)  
