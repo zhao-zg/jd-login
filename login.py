@@ -832,7 +832,7 @@ async def verification(page):
     
     # 双重校准终点（应对任何残余误差）
     await page.mouse.move(end_x, start_y, steps=5)  
-    await page.wait_for_timeout(random.randint(50, 150))
+    await page.waitFor(random.randint(100,300))
 
     await page.mouse.up()
     logger.info("过滑块结束")
