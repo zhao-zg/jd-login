@@ -807,7 +807,7 @@ async def verification(page):
     start_y = box["y"]  # Y轴固定不变
     end_x = start_x + distance
 
-    for i in range(steps + 1):  # +1确保覆盖t=1.0
+    for i in range(steps):  
         t = i / steps
         
         # ==== 三阶贝塞尔曲线控制 ====
@@ -828,7 +828,7 @@ async def verification(page):
         current_x += noise * (distance / 200)  # 以200px为基准比例
         
         # 移动鼠标（Y轴始终不变）
-        await page.mouse.move(current_x, start_y, steps=1)
+        await page.mouse.move(current_x, start_y, steps=2)
     
     # 双重校准终点（应对任何残余误差）
     await page.mouse.move(end_x, start_y, steps=5)  
