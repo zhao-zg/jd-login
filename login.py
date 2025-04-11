@@ -803,16 +803,37 @@ async def verification(page):
     await page.mouse.move(box["x"] + 10, box["y"] + 10)
     await page.mouse.down()
     steps=50
-    for i in range(steps):
-        t=i/steps
-        if t<0.7:
-            x_step=distance*(t**1.2)+random.uniform(-2, 2)
+    start_x = box["x"]  # 直接使用box的x作为起点
+    start_y = box["y"]  # Y轴固定不变
+    end_x = start_x + distance
+
+    for i in range(steps + 1):  # +1确保覆盖t=1.0
+        t = i / steps
+        
+        # ==== 三阶贝塞尔曲线控制 ====
+        if t < 0.7:
+            # 加速阶段：贝塞尔控制点偏向终点
+            phase_ratio = t / 0.7
+            x_ratio = 3 * (phase_ratio**2) - 2 * (phase_ratio**3)  # 三阶缓动
+            current_x = start_x + distance * 0.8 * x_ratio
+            noise = random.uniform(-3, 3)  # 允许较大初始抖动
         else:
-            x_step=distance*(0.7+(t-0.7))+random.uniform(-1, 1)
-        await page.mouse.move(box["x"]+x_step,box["y"],{"steps": 2})
-    await page.waitFor(
-        random.randint(100, 300)
-    )
+            # 减速阶段：精准收敛至终点
+            phase_ratio = (t - 0.7) / 0.3
+            x_ratio = 0.8 + 0.2 * (1 - (1 - phase_ratio)**3)  # 三阶缓入
+            current_x = start_x + distance * x_ratio
+            noise = random.uniform(-1, 1) * (1 - t)  # 扰动衰减至0
+        
+        # 应用噪声（距离越大抖动幅度越大）
+        current_x += noise * (distance / 200)  # 以200px为基准比例
+        
+        # 移动鼠标（Y轴始终不变）
+        await page.mouse.move(current_x, start_y, steps=1)
+    
+    # 双重校准终点（应对任何残余误差）
+    await page.mouse.move(end_x, start_y, steps=5)  
+    await page.wait_for_timeout(random.randint(50, 150))
+
     await page.mouse.up()
     logger.info("过滑块结束")
 
