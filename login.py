@@ -816,7 +816,7 @@ async def verification(page):
             phase_ratio = t / 0.7
             x_ratio = 3 * (phase_ratio**2) - 2 * (phase_ratio**3)  # 三阶缓动
             current_x = start_x + distance * 0.8 * x_ratio
-            noise = random.uniform(-3, 3)  # 允许较大初始抖动
+            noise = random.uniform(-2, 2)  # 允许较大初始抖动
         else:
             # 减速阶段：精准收敛至终点
             phase_ratio = (t - 0.7) / 0.3
@@ -828,10 +828,10 @@ async def verification(page):
         current_x += noise
         
         # 移动鼠标（Y轴始终不变）
-        await page.mouse.move(current_x, start_y, steps=1)
+        await page.mouse.move(current_x, start_y, steps=2)
     
     # 双重校准终点（应对任何残余误差）
-    await page.mouse.move(end_x, start_y, steps=5)  
+    await page.mouse.move(end_x, start_y, steps=2)  
     await page.waitFor(random.randint(100,300))
 
     await page.mouse.up()
