@@ -802,7 +802,7 @@ async def verification(page):
     distance = await get_distance()
     await page.mouse.move(box["x"] + 10, box["y"] + 10)
     await page.mouse.down()
-    steps=20
+    steps=30
     start_x = box["x"]  # 直接使用box的x作为起点
     start_y = box["y"]  # Y轴固定不变
     end_x = start_x + distance
