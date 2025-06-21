@@ -745,6 +745,8 @@ async def typeSMScode(page, workList, uid):
 async def verification(page):
     logger.info("开始过滑块")
 
+    logger.info("开始过滑块：测试备注信息")
+
     async def get_distance():
         img = cv2.imread("image.png", 0)
         template = cv2.imread("template.png", 0)
