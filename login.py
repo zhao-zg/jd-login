@@ -156,7 +156,7 @@ async def loginPhone(chromium_path, workList, uid, headless):
 
             elif await page.xpath('//*[@id="captcha_modal"]'):
                 logger.info("进入安全验证分支")
-                if await page.xpath('//*[@id="small_img"]'):
+                if await page.xpath('//*[@id="slot_img"]'):
                     logger.info("进入过滑块分支")
 
                     workList[uid].status = "pending"
@@ -354,7 +354,7 @@ async def loginPassword(chromium_path, workList, uid, headless):
 
             elif await page.xpath('//*[@id="captcha_modal"]'):
                 logger.info("进入安全验证分支")
-                if await page.xpath('//*[@id="small_img"]'):
+                if await page.xpath('//*[@id="slot_img"]'):
                     logger.info("进入过滑块分支")
 
                     workList[uid].status = "pending"
@@ -610,7 +610,7 @@ async def sendSMSDirectly(page):
 
     try:
         while True:
-            if await page.xpath('//*[@id="small_img"]'):
+            if await page.xpath('//*[@id="slot_img"]'):
                 await verification(page)
 
             elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
@@ -652,7 +652,7 @@ async def sendSMS(page):
 
     try:
         while True:
-            if await page.xpath('//*[@id="small_img"]'):
+            if await page.xpath('//*[@id="slot_img"]'):
                 await verification(page)
 
             elif await page.xpath('//*[@id="captcha_modal"]/div/div[3]/button'):
@@ -761,32 +761,39 @@ async def verification(page):
         distance = (
             value + 10
         )
+        logger.info("获取了距离")
+        logger.info(distance)
         return distance
-
-    await page.waitForSelector("#cpc_img")
+    logger.info("开始过滑块1")
+    await page.waitForSelector("#main_img")
+    logger.info("获取到大滑块信息")
     image_src = await page.Jeval(
-        "#cpc_img", 'el => el.getAttribute("src")'
+        "#main_img", 'el => el.getAttribute("src")'
     )
     request.urlretrieve(image_src, "image.png")
     width = await page.evaluate(
-        '() => { return document.getElementById("cpc_img").clientWidth; }'
+        '() => { return document.getElementById("main_img").clientWidth; }'
     )
     height = await page.evaluate(
-        '() => { return document.getElementById("cpc_img").clientHeight; }'
+        '() => { return document.getElementById("main_img").clientHeight; }'
     )
+
+    logger.info("大滑块尺寸")
     image = Image.open("image.png")
     resized_image = image.resize((width, height))
     resized_image.save("image.png")
     template_src = await page.Jeval(
-        "#small_img", 'el => el.getAttribute("src")'
+        "#slot_img", 'el => el.getAttribute("src")'
     )
     request.urlretrieve(template_src, "template.png")
     width = await page.evaluate(
-        '() => { return document.getElementById("small_img").clientWidth; }'
+        '() => { return document.getElementById("slot_img").clientWidth; }'
     )
     height = await page.evaluate(
-        '() => { return document.getElementById("small_img").clientHeight; }'
+        '() => { return document.getElementById("slot_img").clientHeight; }'
     )
+
+    logger.info("获取了小滑块信息")
     image = Image.open("template.png")
     resized_image = image.resize((width, height))
     resized_image.save("template.png")
@@ -947,20 +954,20 @@ async def verification_shape(page):
         i -= 1
         await page.waitForSelector("div.captcha_footer img")
         image_src = await page.Jeval(
-            "#cpc_img", 'el => el.getAttribute("src")'
+            "#main_img", 'el => el.getAttribute("src")'
         )
         request.urlretrieve(image_src, "shape_image.png")
         width = await page.evaluate(
-            '() => { return document.getElementById("cpc_img").clientWidth; }'
+            '() => { return document.getElementById("main_img").clientWidth; }'
         )
         height = await page.evaluate(
-            '() => { return document.getElementById("cpc_img").clientHeight; }'
+            '() => { return document.getElementById("main_img").clientHeight; }'
         )
         image = Image.open("shape_image.png")
         resized_image = image.resize((width, height))
         resized_image.save("shape_image.png")
 
-        b_image = await page.querySelector("#cpc_img")
+        b_image = await page.querySelector("#main_img")
         b_image_box = await b_image.boundingBox()
         image_top_left_x = b_image_box["x"]
         image_top_left_y = b_image_box["y"]
