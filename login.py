@@ -743,105 +743,140 @@ async def typeSMScode(page, workList, uid):
 
 
 async def verification(page):
-    logger.info("开始过滑块")
+    logger.info("开始过滑块验证")
+    
+    try:
+        # 1. 获取滑块和背景图
+        await page.waitForSelector("#main_img", timeout=5000)
+        logger.info("已定位滑块背景图元素")
+        
+        image_src = await page.Jeval("#main_img", 'el => el.getAttribute("src")')
+        logger.info(f"背景图SRC: {image_src[:30]}...")
+        
+        request.urlretrieve(image_src, "image.png")
+        logger.info("背景图下载完成")
 
-    logger.info("开始过滑块：测试备注信息")
+        # 2. 获取模板图
+        template_src = await page.Jeval("#slot_img", 'el => el.getAttribute("src")')
+        logger.info(f"滑块模板SRC: {template_src[:30]}...")
+        
+        request.urlretrieve(template_src, "template.png")
+        logger.info("滑块模板下载完成")
 
-    async def get_distance():
+        # 3. 获取实际显示尺寸
+        bg_width = await page.evaluate('() => document.getElementById("main_img").clientWidth')
+        bg_height = await page.evaluate('() => document.getElementById("main_img").clientHeight')
+        logger.info(f"背景图显示尺寸: {bg_width}x{bg_height}")
+        
+        slot_width = await page.evaluate('() => document.getElementById("slot_img").clientWidth')
+        slot_height = await page.evaluate('() => document.getElementById("slot_img").clientHeight')
+        logger.info(f"滑块显示尺寸: {slot_width}x{slot_height}")
+
+        # 4. 调整图片到显示尺寸
+        for path, size in [("image.png", (bg_width, bg_height)), 
+                          ("template.png", (slot_width, slot_height))]:
+            img = Image.open(path)
+            img = img.resize(size)
+            img.save(path)
+        logger.info("图片尺寸调整完成")
+
+        # 5. 计算滑块距离
+        logger.info("开始计算滑动距离...")
+        
         img = cv2.imread("image.png", 0)
         template = cv2.imread("template.png", 0)
+        
+        # 增强边缘检测
         img = cv2.GaussianBlur(img, (5, 5), 0)
         template = cv2.GaussianBlur(template, (5, 5), 0)
-        bg_edge = cv2.Canny(img, 100, 200)
-        cut_edge = cv2.Canny(template, 100, 200)
-        img = cv2.cvtColor(bg_edge, cv2.COLOR_GRAY2RGB)
-        template = cv2.cvtColor(cut_edge, cv2.COLOR_GRAY2RGB)
-        res = cv2.matchTemplate(
-            img, template, cv2.TM_CCOEFF_NORMED
-        )
-        value = cv2.minMaxLoc(res)[3][0]
-        distance = (
-            value + 10
-        )
-        logger.info("获取了距离")
-        logger.info(distance)
-        return distance
-    logger.info("开始过滑块1")
-    await page.waitForSelector("#main_img")
-    logger.info("获取到大滑块信息")
-    image_src = await page.Jeval(
-        "#main_img", 'el => el.getAttribute("src")'
-    )
-    request.urlretrieve(image_src, "image.png")
-    width = await page.evaluate(
-        '() => { return document.getElementById("main_img").clientWidth; }'
-    )
-    height = await page.evaluate(
-        '() => { return document.getElementById("main_img").clientHeight; }'
-    )
+        
+        bg_edge = cv2.Canny(img, 50, 150)
+        cut_edge = cv2.Canny(template, 50, 150)
+        
+        # 可视化边缘检测结果（调试用）
+        cv2.imwrite("debug_bg_edge.png", bg_edge)
+        cv2.imwrite("debug_slot_edge.png", cut_edge)
+        logger.info("边缘检测结果已保存")
+        
+        # 模板匹配
+        res = cv2.matchTemplate(bg_edge, cut_edge, cv2.TM_CCOEFF_NORMED)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        logger.info(f"匹配结果: 最大相似度={max_val:.2f}, 位置={max_loc}")
+        
+        # 计算滑块中心点到缺口中心的距离
+        slot_center_x = max_loc[0] + slot_width // 2
+        distance = slot_center_x - 10  # 减去初始偏移
+        
+        logger.info(f"计算滑动距离: {distance}px")
 
-    logger.info("大滑块尺寸")
-    image = Image.open("image.png")
-    resized_image = image.resize((width, height))
-    resized_image.save("image.png")
-    template_src = await page.Jeval(
-        "#slot_img", 'el => el.getAttribute("src")'
-    )
-    request.urlretrieve(template_src, "template.png")
-    width = await page.evaluate(
-        '() => { return document.getElementById("slot_img").clientWidth; }'
-    )
-    height = await page.evaluate(
-        '() => { return document.getElementById("slot_img").clientHeight; }'
-    )
-
-    logger.info("获取了小滑块信息")
-    image = Image.open("template.png")
-    resized_image = image.resize((width, height))
-    resized_image.save("template.png")
-    await page.waitFor(100)
-    el = await page.querySelector(
-        "#captcha_modal > div > div.captcha_footer > div > div.sp-msg"
-    )
-    if not el:
-        el = await page.querySelector(
+        # 6. 执行滑块拖动
+        logger.info("开始模拟拖动滑块...")
+        
+        slider = await page.querySelector(
+            "#captcha_modal > div > div.captcha_footer > div > div.sp-msg"
+        ) or await page.querySelector(
             "#captcha_modal > div > div.captcha_footer > div > img"
         )
-    box = await el.boundingBox()
-    distance = await get_distance()
-    await page.mouse.move(box["x"] + 10, box["y"] + 10)
-    await page.mouse.down()
-    steps=30
-    start_x = box["x"]  # 直接使用box的x作为起点
-    start_y = box["y"]  # Y轴固定不变
-    end_x = start_x + distance
-
-    for i in range(steps):  
-        t = i / steps
         
-        if t < 0.7:
-            # 加速阶段：贝塞尔控制点偏向终点
-            phase_ratio = t / 0.7
-            x_ratio = 3 * (phase_ratio**2) - 2 * (phase_ratio**3)  # 三阶缓动
-            current_x = start_x + distance * 0.8 * x_ratio
-            noise = random.uniform(-2, 2)  # 允许较大初始抖动
-        else:
-            # 减速阶段：精准收敛至终点
-            phase_ratio = (t - 0.7) / 0.3
-            x_ratio = 0.8 + 0.2 * (1-(1-phase_ratio)**2)  # 线性缓入
-            current_x = start_x + distance * x_ratio
-            noise = random.uniform(-1, 1)
+        if not slider:
+            logger.error("未找到滑块元素!")
+            return
+            
+        box = await slider.boundingBox()
+        start_x = box["x"] + 10
+        start_y = box["y"] + 10
         
-        # 应用噪声（距离越大抖动幅度越大）
-        current_x += noise
+        # 移动到滑块位置
+        await page.mouse.move(start_x, start_y)
+        await page.mouse.down()
+        await asyncio.sleep(0.2)
         
-        # 移动鼠标（Y轴始终不变）
-        await page.mouse.move(current_x, start_y, steps=1)
-     
-    await page.waitFor(random.randint(150,400))
-
-    await page.mouse.up()
-    logger.info("过滑块结束")
+        # 分段拖动模拟人类操作
+        steps = 30
+        drag_log = []
+        current_x = start_x
+        
+        for i in range(steps):
+            # 变速拖动：先快后慢
+            if i < steps * 0.7:
+                step_size = distance * 0.8 / (steps * 0.7)
+            else:
+                step_size = distance * 0.2 / (steps * 0.3)
+                
+            # 添加随机抖动
+            current_x += step_size + random.uniform(-1, 1)
+            
+            # 记录拖动轨迹（调试用）
+            drag_log.append((current_x, start_y))
+            
+            await page.mouse.move(current_x, start_y)
+            await asyncio.sleep(random.uniform(0.03, 0.08))
+        
+        # 最终微调
+        for _ in range(3):
+            current_x += random.uniform(-1, 1)
+            await page.mouse.move(current_x, start_y)
+            await asyncio.sleep(0.1)
+        
+        # 释放鼠标
+        await page.mouse.up()
+        logger.info(f"滑块拖动完成，轨迹点: {len(drag_log)}个")
+        
+        # 保存轨迹图像（调试用）
+        debug_img = cv2.imread("image.png")
+        for x, y in drag_log:
+            cv2.circle(debug_img, (int(x - start_x), 50), 2, (0, 0, 255), -1)
+        cv2.imwrite("debug_drag_path.png", debug_img)
+        logger.info("拖动轨迹已保存至 debug_drag_path.png")
+        
+    except Exception as e:
+        logger.error(f"滑块验证失败: {str(e)}")
+        logger.exception(e)
+        
+        # 保存错误截图
+        await page.screenshot({'path': 'slider_error.png'})
+        logger.error("错误截图已保存至 slider_error.png")
+        raise
 
 
 async def verification_shape(page):
