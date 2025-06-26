@@ -832,7 +832,7 @@ async def verification(page):
         await asyncio.sleep(0.2)
         
         # 分段拖动模拟人类操作
-        steps = 30
+        steps = 6
         drag_log = []
         current_x = start_x
         
